@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # emacs
-
-dpkg -s emacs-mozc-bin &> /dev/null
+dpkg -s emacs-mozc &> /dev/null
 if [ $? -eq 0 ]; then
     ln -s ~/dotfiles/init.el ~/.emacs.d/init.el
 else
