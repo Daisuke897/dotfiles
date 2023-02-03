@@ -1,3 +1,6 @@
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
 (package-initialize)
