@@ -10,6 +10,11 @@
   )
 (require 'julia-mode)
 
+(unless (package-installed-p 'rust-mode)
+  (package-install 'rust-mode)
+  )
+(require 'rust-mode)
+
 (unless (package-installed-p 'magit)
   (package-install 'magit)
   )
