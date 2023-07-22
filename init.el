@@ -3,6 +3,10 @@
 ;;; my init file of Emacs
 ;;; Code:
 
+(setq inhibit-startup-screen t)
+
+(defvar user-home-directory (file-name-as-directory (getenv "HOME")))
+
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
 (package-initialize)
@@ -51,21 +55,21 @@
   (yas-global-mode 1)
   )
 
-(use-package pyvenv
-  :custom
-  (pyvenv-activate "~/software/fortls/")
-  :hook
-  (f90-mode . pyvenv-mode)
-  )
+;; (use-package pyvenv
+;;   :custom
+;;   (pyvenv-activate "~/software/fortls/")
+;;   :hook
+;;   (f90-mode . pyvenv-mode)
+;;   )
 
 (use-package lsp-mode
   :custom
-  (lsp-clients-fortls-executable "~/software/fortls/bin/fortls")
-  (lsp-clients-fortls-args '("--hover_signature" "--lowercase_intrinsics"))
+  (lsp-clients-fortls-executable "apptainer")
+  (lsp-clients-fortls-args '("run" ,(concat user-home-directory "dotfiles/images/fortran_language_server.sif")))
   :hook
   (f90-mode . lsp)
   (rust-mode . lsp)
-  (julia-mode . lsp-deferred)
+  (julia-mode . lsp)
   :config
   (add-hook 'lsp-after-open-hook
 	    (lambda ()
@@ -80,14 +84,14 @@
   (lsp-julia-command "apptainer")
   (lsp-julia-flags (if lsp-julia-package-dir
                        `("exec"
-			 "/home/daisuke/sif/julia/language_server/julia_language_server.dif"
+			 ,(concat user-home-directory "dotfiles/images/julia_language_server.sif")
 			 "julia"
 			 ,(concat "--project=" lsp-julia-package-dir)
 			 "--startup-file=no"
                          "--history-file=no")
 
 		     '("exec"
-		       "~/sif/julia/language_server/julia_language_server.dif"
+		       ,(concat user-home-directory "dotfiles/images/julia_language_server.sif")
 		       "julia "
 		       "--startup-file=no"
 		       "--history-file=no"))
@@ -95,22 +99,6 @@
   (lsp-julia-default-environment "~/.julia/environments/v1.9")
   :hook
   (julia-mode . lsp-mode)
-  ;; :config
-  ;; (defun lsp-julia--rls-command ()
-  ;; "The command to lauch the Julia Language Server."
-  ;; `(,lsp-julia-command
-  ;;   ,@lsp-julia-flags
-  ;;   ,(concat "-e"
-  ;;            "'import Pkg; Pkg.instantiate(); "
-  ;;            "using LanguageServer, LanguageServer.SymbolServer;"
-  ;;            ;; " Union{Int64, String}(x::String) = x; "
-  ;;            " server = LanguageServer.LanguageServerInstance("
-  ;;            " stdin, stdout,"
-  ;;            (lsp-julia--get-root) ","
-  ;;            (lsp-julia--get-depot-path) ","
-  ;;            " nothing, "
-  ;;            (lsp-julia--symbol-server-store-path-to-jl) ");"
-  ;;            " run(server);'")))
   )
 
 
