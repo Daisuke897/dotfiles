@@ -1,6 +1,6 @@
 #!/bin/bash
 
-mkdir -p def_files/
+mkdir -p images/
 
 apptainer build \
 	  images/julia_language_server.sif \
