@@ -126,5 +126,12 @@
  ;; If there is more than one, they won't work right.
  )
 
+(require 'mozc)
+(setq default-input-method "japanese-mozc")
+;; "sudo apt install emacs-mozc-bin"
+
+(setq-default ispell-program-name "aspell")
+
+
 (provide 'init)
 ;;; init.el ends here
