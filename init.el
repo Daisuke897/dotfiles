@@ -65,17 +65,17 @@
 (use-package lsp-mode
   :custom
   (lsp-clients-fortls-executable "apptainer")
-  (lsp-clients-fortls-args '("run" ,(concat user-home-directory "dotfiles/images/fortran_language_server.sif")))
+  (lsp-clients-fortls-args `("run" ,(concat user-home-directory "dotfiles/images/fortran_language_server.sif")))
   :hook
   (f90-mode . lsp)
   (rust-mode . lsp)
   (julia-mode . lsp)
   :config
-  (add-hook 'lsp-after-open-hook
-	    (lambda ()
-	      (when (derived-mode-p 'f90-mode)
-		(setq-local flycheck-checker 'fortran-gfortran)))
-	    )
+  ;; (add-hook 'lsp-after-open-hook
+  ;; 	    (lambda ()
+  ;; 	      (when (derived-mode-p 'f90-mode)
+  ;; 		(setq-local flycheck-checker 'fortran-gfortran)))
+  ;; 	    )
   )
 
 (use-package lsp-julia
@@ -90,7 +90,7 @@
 			 "--startup-file=no"
                          "--history-file=no")
 
-		     '("exec"
+		     `("exec"
 		       ,(concat user-home-directory "dotfiles/images/julia_language_server.sif")
 		       "julia "
 		       "--startup-file=no"
