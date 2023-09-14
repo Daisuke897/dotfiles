@@ -103,6 +103,11 @@
   (julia-mode . lsp-mode)
   )
 
+;; active Babel languages
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((python . t)
+   (emacs-lisp . t)))
 
 (column-number-mode 1)
 
