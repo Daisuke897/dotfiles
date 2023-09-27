@@ -1,0 +1,32 @@
+Bootstrap: docker
+From: rust:latest
+Stage: Rust
+
+%environment
+export PATH=/opt/texlab_target/release:$PATH
+
+%post
+
+apt update
+apt upgrade
+
+apt install git -y
+
+cd /opt
+
+git clone https://github.com/latex-lsp/texlab.git
+
+cd texlab
+
+cargo build --release --target-dir=/opt/texlab_target
+
+cd /opt
+
+rm texlab -rf
+
+%runscript
+
+texlab
+
+%labels
+Author Daisuke Nakahara

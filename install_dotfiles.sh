@@ -10,6 +10,10 @@ apptainer build \
 	  images/fortran_language_server.sif \
 	  def_files/fortran_language_server.def
 
+apptainer build \
+	  images/latex_language_server.sif \
+	  def_files/latex_language_server.def
+
 # emacs
 dpkg -s emacs-mozc &> /dev/null
 if [ $? -eq 0 ]; then

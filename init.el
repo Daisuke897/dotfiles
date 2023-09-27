@@ -67,12 +67,38 @@
   (f90-mode . lsp)
   (rust-mode . lsp)
   (julia-mode . lsp)
+  (tex-mode . lsp)
   :config
   ;; (add-hook 'lsp-after-open-hook
   ;; 	    (lambda ()
   ;; 	      (when (derived-mode-p 'f90-mode)
   ;; 		(setq-local flycheck-checker 'fortran-gfortran)))
   ;; 	    )
+  )
+
+(use-package lsp-tex
+  :custom
+  (lsp-clients-texlab-executable "apptainer")
+  :config
+  (defcustom lsp-clients-texlab-args `("run" ,(concat user-home-directory "dotfiles/images/latex_language_server.sif"))
+    "Extra arguments for the texlab executable"
+			   :group 'lsp-tex
+			   :risky t
+			   :type '(repeat string))
+  
+  (defun lsp-clients--texlab-command ()
+    "Generate the language server startup command."
+    `(,lsp-clients-texlab-executable
+      ,@lsp-clients-texlab-args)
+    )
+  
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-stdio-connection 'lsp-clients--texlab-command)
+                  :major-modes '(plain-tex-mode latex-mode)
+                  :priority (if (eq lsp-tex-server 'texlab) 1 -1)
+                  :server-id 'texlab)
+   )
+  (lsp-consistency-check lsp-tex)
   )
 
 (use-package lsp-julia
