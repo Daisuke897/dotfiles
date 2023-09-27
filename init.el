@@ -57,12 +57,7 @@
   (yas-global-mode 1)
   )
 
-;; (use-package pyvenv
-;;   :custom
-;;   (pyvenv-activate "~/software/fortls/")
-;;   :hook
-;;   (f90-mode . pyvenv-mode)
-;;   )
+(use-package pyvenv)
 
 (use-package lsp-mode
   :custom
