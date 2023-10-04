@@ -4,6 +4,9 @@ Stage: Julia
 
 %post
 
+apt update
+apt upgrade -y
+
 export JULIA_DEPOT_PATH="/usr/local/julia/local/share/julia"
 
 mkdir -p /opt/julia
