@@ -57,8 +57,6 @@
   (yas-global-mode 1)
   )
 
-(use-package pyvenv)
-
 (use-package lsp-mode
   :custom
   (lsp-clients-fortls-executable "apptainer")
