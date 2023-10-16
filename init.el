@@ -59,8 +59,6 @@
   (yas-global-mode 1)
   )
 
-(use-package pyvenv)
-
 (use-package lsp-mode
   :custom
   (lsp-clients-fortls-executable "apptainer")
@@ -142,6 +140,9 @@
 (setq default-input-method "japanese-mozc")
 ;; "sudo apt install emacs-mozc-bin"
 
+(setq-default ispell-program-name "aspell")
+
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -155,13 +156,6 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
-
-(require 'mozc)
-(setq default-input-method "japanese-mozc")
-;; "sudo apt install emacs-mozc-bin"
-
-(setq-default ispell-program-name "aspell")
-
 
 (provide 'init)
 ;;; init.el ends here
