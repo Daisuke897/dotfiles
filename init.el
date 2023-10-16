@@ -70,10 +70,10 @@
   (tex-mode . lsp)
   :config
   ;; (add-hook 'lsp-after-open-hook
-  ;; 	    (lambda ()
-  ;; 	      (when (derived-mode-p 'f90-mode)
-  ;; 		(setq-local flycheck-checker 'fortran-gfortran)))
-  ;; 	    )
+  ;;        (lambda ()
+  ;;          (when (derived-mode-p 'f90-mode)
+  ;;            (setq-local flycheck-checker 'fortran-gfortran)))
+  ;;        )
   )
 
 (use-package lsp-tex
@@ -82,9 +82,9 @@
   :config
   (defcustom lsp-clients-texlab-args `("run" ,(concat user-home-directory "dotfiles/images/latex_language_server.sif"))
     "Extra arguments for the texlab executable"
-			   :group 'lsp-tex
-			   :risky t
-			   :type '(repeat string))
+                           :group 'lsp-tex
+                           :risky t
+                           :type '(repeat string))
   
   (defun lsp-clients--texlab-command ()
     "Generate the language server startup command."
@@ -107,18 +107,18 @@
   (lsp-julia-command "apptainer")
   (lsp-julia-flags (if lsp-julia-package-dir
                        `("exec"
-			 ,(concat user-home-directory "dotfiles/images/julia_language_server.sif")
-			 "julia"
-			 ,(concat "--project=" lsp-julia-package-dir)
-			 "--startup-file=no"
+                         ,(concat user-home-directory "dotfiles/images/julia_language_server.sif")
+                         "julia"
+                         ,(concat "--project=" lsp-julia-package-dir)
+                         "--startup-file=no"
                          "--history-file=no")
 
-		     `("exec"
-		       ,(concat user-home-directory "dotfiles/images/julia_language_server.sif")
-		       "julia "
-		       "--startup-file=no"
-		       "--history-file=no"))
-		   )
+                     `("exec"
+                       ,(concat user-home-directory "dotfiles/images/julia_language_server.sif")
+                       "julia "
+                       "--startup-file=no"
+                       "--history-file=no"))
+                   )
   (lsp-julia-default-environment "~/.julia/environments/v1.9")
   :hook
   (julia-mode . lsp-mode)
