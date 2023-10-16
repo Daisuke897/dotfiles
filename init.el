@@ -3,7 +3,9 @@
 ;;; my init file of Emacs
 ;;; Code:
 
-(setq inhibit-startup-screen t)
+(setq-default inhibit-startup-screen t)
+(setq-default indent-tabs-mode nil)
+(setq-default show-trailing-whitespace t)
 
 (defvar user-home-directory (file-name-as-directory (getenv "HOME")))
 
