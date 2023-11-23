@@ -85,18 +85,18 @@
                            :group 'lsp-tex
                            :risky t
                            :type '(repeat string))
-  
+
   (defun lsp-clients--texlab-command ()
     "Generate the language server startup command."
     `(,lsp-clients-texlab-executable
       ,@lsp-clients-texlab-args)
     )
-  
+
   (lsp-register-client
    (make-lsp-client :new-connection (lsp-stdio-connection 'lsp-clients--texlab-command)
-                  :major-modes '(plain-tex-mode latex-mode)
-                  :priority (if (eq lsp-tex-server 'texlab) 1 -1)
-                  :server-id 'texlab)
+                    :major-modes '(plain-tex-mode latex-mode)
+                    :priority (if (eq lsp-tex-server 'texlab) 1 -1)
+                    :server-id 'texlab)
    )
   (lsp-consistency-check lsp-tex)
   )
@@ -105,19 +105,12 @@
   :custom
   (lsp-julia-package-dir "/opt/julia")
   (lsp-julia-command "apptainer")
-  (lsp-julia-flags (if lsp-julia-package-dir
-                       `("exec"
-                         ,(concat user-home-directory "dotfiles/images/julia_language_server.sif")
-                         "julia"
-                         ,(concat "--project=" lsp-julia-package-dir)
-                         "--startup-file=no"
-                         "--history-file=no")
-
-                     `("exec"
-                       ,(concat user-home-directory "dotfiles/images/julia_language_server.sif")
-                       "julia "
-                       "--startup-file=no"
-                       "--history-file=no"))
+  (lsp-julia-flags `("exec"
+                     ,(concat user-home-directory "dotfiles/images/julia_language_server.sif")
+                     "julia"
+                     ,(concat "--project=" lsp-julia-package-dir)
+                     "--startup-file=no"
+                     "--history-file=no")
                    )
   (lsp-julia-default-environment "~/.julia/environments/v1.9")
   :hook
