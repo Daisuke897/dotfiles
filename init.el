@@ -59,23 +59,6 @@
   (yas-global-mode 1)
   )
 
-(use-package lsp-mode
-  :custom
-  (lsp-clients-fortls-executable "apptainer")
-  (lsp-clients-fortls-args `("run" ,(concat user-home-directory "dotfiles/images/fortran_language_server.sif")))
-  :hook
-  (f90-mode . lsp)
-  (rust-mode . lsp)
-  (julia-mode . lsp)
-  (tex-mode . lsp)
-  :config
-  ;; (add-hook 'lsp-after-open-hook
-  ;;        (lambda ()
-  ;;          (when (derived-mode-p 'f90-mode)
-  ;;            (setq-local flycheck-checker 'fortran-gfortran)))
-  ;;        )
-  )
-
 (use-package lsp-tex
   :custom
   (lsp-clients-texlab-executable "apptainer")
@@ -113,8 +96,35 @@
                      "--history-file=no")
                    )
   (lsp-julia-default-environment "~/.julia/environments/v1.9")
+  :init
+  (defun lsp-julia--rls-command ()
+    "The command to lauch the Julia Language Server."
+    `(,lsp-julia-command
+      ,@lsp-julia-flags
+      ,(concat "-e "
+               "\"import Pkg; Pkg.instantiate(); "
+               "using LanguageServer, LanguageServer.SymbolServer; "
+               "server = LanguageServer.LanguageServerInstance("
+               "stdin, stdout, "
+               "\"" (lsp-julia--get-root) "\", "
+               "\"" (lsp-julia--get-depot-path) "\", "
+               "nothing, "
+               "\"" (lsp-julia--symbol-server-store-path-to-jl) "\"); "
+               "run(server);\"")))
+  :config
+  (lsp-consistency-check lsp-julia)
+  )
+
+(use-package lsp-mode
+  :custom
+  (lsp-clients-fortls-executable "apptainer")
+  (lsp-clients-fortls-args `("run" ,(concat user-home-directory "dotfiles/images/fortran_language_server.sif")))
   :hook
-  (julia-mode . lsp-mode)
+  (f90-mode . lsp)
+  (rust-mode . lsp)
+  (julia-mode . lsp)
+  (tex-mode . lsp)
+  :commands lsp
   )
 
 (use-package ivy-bibtex
