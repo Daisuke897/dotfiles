@@ -18,6 +18,8 @@ git clone https://github.com/latex-lsp/texlab.git
 
 cd texlab
 
+git checkout v5.11.0
+
 cargo build --release --target-dir=/opt/texlab_target
 
 cd /opt
