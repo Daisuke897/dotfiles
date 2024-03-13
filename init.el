@@ -127,6 +127,12 @@
   :commands lsp
   )
 
+(use-package lsp-rust
+  :custom
+  (lsp-rust-analyzer-server-command
+   `("apptainer" "run" ,(concat user-home-directory "dotfiles/images/rust_language_server.sif")))
+  )
+
 (use-package ivy-bibtex
   :init
   (setq bibtex-completion-additional-search-fields '(keywords)
