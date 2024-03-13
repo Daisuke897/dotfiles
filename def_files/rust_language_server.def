@@ -1,0 +1,39 @@
+Bootstrap: docker
+From: rust:latest
+Stage: Rust
+
+%environment
+export PATH=$CARGO_HOME/bin/:$PATH
+export CARGO_HOME=$HOME/.cargo/
+
+%post
+
+apt update
+apt upgrade -y
+
+rustup update
+
+rustup component add rust-src
+
+cd /opt
+
+git clone https://github.com/rust-lang/rust-analyzer.git
+
+cd rust-analyzer
+
+git checkout release
+
+cargo xtask install --server
+
+cd ../
+
+rm rust-analyzer -rf
+
+which rust-analyzer
+
+%runscript
+
+rust-analyzer
+
+%labels
+Author Daisuke Nakahara
