@@ -7,6 +7,9 @@
 (setq-default indent-tabs-mode nil)
 (setq-default show-trailing-whitespace t)
 
+(setq read-process-output-max (* 1024 1024)) ;; 1mb
+(setq gc-cons-threshold 100000000)
+
 (defvar user-home-directory (file-name-as-directory (getenv "HOME")))
 
 (require 'package)
@@ -25,6 +28,10 @@
 (use-package rust-mode
   :mode "\\.rs\\'"
   :interpreter "rust")
+
+(use-package python-mode
+  :mode "\\.py\\'"
+  :interpreter "python")
 
 (use-package ivy
   :config
@@ -59,44 +66,13 @@
   (yas-global-mode 1)
   )
 
-(use-package lsp-tex
-  :custom
-  (lsp-clients-texlab-executable "apptainer")
-  :config
-  (defcustom lsp-clients-texlab-args `("run" ,(concat user-home-directory "dotfiles/images/latex_language_server.sif"))
-    "Extra arguments for the texlab executable"
-                           :group 'lsp-tex
-                           :risky t
-                           :type '(repeat string))
-
-  (defun lsp-clients--texlab-command ()
-    "Generate the language server startup command."
-    `(,lsp-clients-texlab-executable
-      ,@lsp-clients-texlab-args)
-    )
-
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-stdio-connection 'lsp-clients--texlab-command)
-                    :major-modes '(plain-tex-mode latex-mode)
-                    :priority (if (eq lsp-tex-server 'texlab) 1 -1)
-                    :server-id 'texlab)
-   )
-  (lsp-consistency-check lsp-tex)
-  )
-
 (use-package lsp-julia
-  :custom
-  (lsp-julia-package-dir "/opt/julia")
-  (lsp-julia-command "apptainer")
-  (lsp-julia-flags `("exec"
-                     ,(concat user-home-directory "dotfiles/images/julia_language_server.sif")
-                     "julia"
-                     ,(concat "--project=" lsp-julia-package-dir)
-                     "--startup-file=no"
-                     "--history-file=no")
-                   )
-  (lsp-julia-default-environment "~/.julia/environments/v1.9")
   :init
+  (when (eq system-type 'gnu/linux)
+    (setq lsp-julia-command "apptainer")
+    (setq lsp-julia-package-dir "/opt/julia")
+    )
+  (setq lsp-julia-default-environment "~/.julia/environments/v1.10")
   (defun lsp-julia--rls-command ()
     "The command to lauch the Julia Language Server."
     `(,lsp-julia-command
@@ -112,25 +88,77 @@
                "\"" (lsp-julia--symbol-server-store-path-to-jl) "\"); "
                "run(server);\"")))
   :config
-  (lsp-consistency-check lsp-julia)
+  (when (eq system-type 'gnu/linux)
+    (setq lsp-julia-flags `("exec"
+                            ,(concat user-home-directory
+                                     "dotfiles/images/"
+                                     "julia_language_server.sif")
+                            "julia"
+                            ,@lsp-julia-flags))
+    )
+  )
+
+(use-package lsp-pylsp
+  :init
+  (setq lsp-pylsp-server-command
+        (cond ((eq system-type 'gnu/linux)
+               `("apptainer"
+                 "run"
+                 ,(concat user-home-directory
+                          "dotfiles/images/"
+                          "python_language_server.sif")))
+              ((eq system-type 'darwin)
+               `(,(concat user-home-directory
+                          "Software/python_lsp/bin/pylsp")))
+              ))
+  )
+
+(when (eq system-type 'gnu/linux)
+  (use-package lsp-tex
+    :init
+    (setq lsp-clients-texlab-executable "apptainer")
+    (defun lsp-clients-texlab-args ()
+      `(,lsp-clients-texlab-executable
+        "run"
+        ,(concat user-home-directory
+                 "dotfiles/images/latex_language_server.sif"))
+      )
+    :config
+    (lsp-register-client
+     (make-lsp-client :new-connection (lsp-stdio-connection
+                                       (lsp-clients-texlab-args))
+                      :major-modes '(plain-tex-mode latex-mode)
+                      :priority (if (eq lsp-tex-server 'texlab) 1 -1)
+                      :server-id 'texlab)
+     )
+    )
+
+  (use-package lsp-rust
+    :custom
+    (lsp-rust-analyzer-server-command
+     `("apptainer" "run" ,(concat user-home-directory
+                                  "dotfiles/images/"
+                                  "rust_language_server.sif")))
+    )
+
+  (use-package lsp-fortran
+    :init
+    (setq lsp-clients-fortls-executable "apptainer")
+    (setq lsp-clients-fortls-args `("run"
+                                    ,(concat user-home-directory
+                                             "dotfiles/images/"
+                                             "fortran_language_server.sif")))
+    )
   )
 
 (use-package lsp-mode
-  :custom
-  (lsp-clients-fortls-executable "apptainer")
-  (lsp-clients-fortls-args `("run" ,(concat user-home-directory "dotfiles/images/fortran_language_server.sif")))
   :hook
   (f90-mode . lsp)
   (rust-mode . lsp)
   (julia-mode . lsp)
   (tex-mode . lsp)
+  (python-mode . lsp)
   :commands lsp
-  )
-
-(use-package lsp-rust
-  :custom
-  (lsp-rust-analyzer-server-command
-   `("apptainer" "run" ,(concat user-home-directory "dotfiles/images/rust_language_server.sif")))
   )
 
 (use-package ivy-bibtex
@@ -190,9 +218,11 @@
 
 (set-language-environment "UTF-8")
 
-(require 'mozc)
-(setq default-input-method "japanese-mozc")
-;; "sudo apt install emacs-mozc-bin"
+(when (eq system-type 'gnu/linux)
+  (require 'mozc)
+  (setq default-input-method "japanese-mozc")
+  ;; "sudo apt install emacs-mozc-bin"
+  )
 
 (setq-default ispell-program-name "aspell")
 
@@ -204,7 +234,7 @@
  ;; If there is more than one, they won't work right.
  '(org-agenda-files nil)
  '(package-selected-packages
-   '(ivy-bibtex org-ref rust-mode lsp-ivy counsel lsp-ui company flycheck lsp-julia lsp-mode pyvenv use-package yasnippet cmake-mode magit julia-mode)))
+   '(python-mode ivy-bibtex org-ref rust-mode lsp-ivy counsel lsp-ui company flycheck lsp-julia lsp-mode pyvenv use-package yasnippet cmake-mode magit julia-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
