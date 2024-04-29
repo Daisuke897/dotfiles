@@ -1,18 +1,6 @@
 #!/bin/bash
 
-mkdir -p images/
-
-apptainer build \
-	  images/julia_language_server.sif \
-	  def_files/julia_language_server.def
-
-apptainer build \
-	  images/fortran_language_server.sif \
-	  def_files/fortran_language_server.def
-
-apptainer build \
-	  images/latex_language_server.sif \
-	  def_files/latex_language_server.def
+bash ./install_images_apptainer.sh 
 
 # emacs
 dpkg -s emacs-mozc &> /dev/null
