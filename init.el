@@ -99,6 +99,11 @@
   )
 
 (use-package lsp-pylsp
+  :custom
+  (lsp-pylsp-plugins-rope-autoimport-enabled t)
+  (lsp-pylsp-plugins-rope-completion-enabled t)
+  (lsp-pylsp-plugins-ruff-enabled t)
+  (lsp-pylsp-plugins-yapf-enabled t)
   :init
   (setq lsp-pylsp-server-command
         (cond ((eq system-type 'gnu/linux)
