@@ -218,6 +218,12 @@
  '((python . t)
    (emacs-lisp . t)))
 
+;; docker
+(use-package docker
+  :bind ("C-c d" . docker))
+
+
+
 (column-number-mode 1)
 
 (load-theme 'tango-dark t)
@@ -239,7 +245,7 @@
  ;; If there is more than one, they won't work right.
  '(org-agenda-files nil)
  '(package-selected-packages
-   '(python-mode ivy-bibtex org-ref rust-mode lsp-ivy counsel lsp-ui company flycheck lsp-julia lsp-mode pyvenv use-package yasnippet cmake-mode magit julia-mode)))
+   '(docker dockerfile-mode python-mode ivy-bibtex org-ref rust-mode lsp-ivy counsel lsp-ui company flycheck lsp-julia lsp-mode pyvenv use-package yasnippet cmake-mode magit julia-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
