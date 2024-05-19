@@ -53,7 +53,8 @@
 (use-package flycheck
   :custom
   (flycheck-gfortran-language-standard "f2018")
-  :init (global-flycheck-mode)
+  :init
+  (global-flycheck-mode)
   )
 
 (use-package company
@@ -166,46 +167,46 @@
   :commands lsp
   )
 
-(use-package ivy-bibtex
-  :init
-  (setq bibtex-completion-additional-search-fields '(keywords)
-	bibtex-completion-display-formats
-	'((article       . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${journal:40}")
-	  (inbook        . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} Chapter ${chapter:32}")
-	  (incollection  . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${booktitle:40}")
-	  (inproceedings . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${booktitle:40}")
-	  (t             . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*}"))
-	bibtex-completion-pdf-open-function
-	(lambda (fpath)
-	  (call-process "open" nil 0 nil fpath))))
+;; (use-package ivy-bibtex
+;;   :init
+;;   (setq bibtex-completion-additional-search-fields '(keywords)
+;; 	bibtex-completion-display-formats
+;; 	'((article       . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${journal:40}")
+;; 	  (inbook        . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} Chapter ${chapter:32}")
+;; 	  (incollection  . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${booktitle:40}")
+;; 	  (inproceedings . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${booktitle:40}")
+;; 	  (t             . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*}"))
+;; 	bibtex-completion-pdf-open-function
+;; 	(lambda (fpath)
+;; 	  (call-process "open" nil 0 nil fpath))))
 
-(use-package org-ref
-  :ensure nil
-  :init
-  (require 'bibtex)
-  (setq bibtex-autokey-year-length 4
-	bibtex-autokey-name-year-separator "-"
-	bibtex-autokey-year-title-separator "-"
-	bibtex-autokey-titleword-separator "-"
-	bibtex-autokey-titlewords 2
-	bibtex-autokey-titlewords-stretch 1
-	bibtex-autokey-titleword-length 5)
-  (define-key bibtex-mode-map (kbd "H-b") 'org-ref-bibtex-hydra/body)
-  (define-key org-mode-map (kbd "C-c ]") 'org-ref-insert-link)
-  (define-key org-mode-map (kbd "s-[") 'org-ref-insert-link-hydra/body)
-  (require 'org-ref-ivy)
-  (require 'org-ref-arxiv)
-  (require 'org-ref-scopus)
-  (require 'org-ref-wos))
+;; (use-package org-ref
+;;   :ensure nil
+;;   :init
+;;   (require 'bibtex)
+;;   (setq bibtex-autokey-year-length 4
+;; 	bibtex-autokey-name-year-separator "-"
+;; 	bibtex-autokey-year-title-separator "-"
+;; 	bibtex-autokey-titleword-separator "-"
+;; 	bibtex-autokey-titlewords 2
+;; 	bibtex-autokey-titlewords-stretch 1
+;; 	bibtex-autokey-titleword-length 5)
+;;   (define-key bibtex-mode-map (kbd "H-b") 'org-ref-bibtex-hydra/body)
+;;   (define-key org-mode-map (kbd "C-c ]") 'org-ref-insert-link)
+;;   (define-key org-mode-map (kbd "s-[") 'org-ref-insert-link-hydra/body)
+;;   (require 'org-ref-ivy)
+;;   (require 'org-ref-arxiv)
+;;   (require 'org-ref-scopus)
+;;   (require 'org-ref-wos))
 
 
-(use-package org-ref-ivy
-  :ensure nil
-  :init (setq org-ref-insert-link-function 'org-ref-insert-link-hydra/body
-	      org-ref-insert-cite-function 'org-ref-cite-insert-ivy
-	      org-ref-insert-label-function 'org-ref-insert-label-link
-	      org-ref-insert-ref-function 'org-ref-insert-ref-link
-	      org-ref-cite-onclick-function (lambda (_) (org-ref-citation-hydra/body))))
+;; (use-package org-ref-ivy
+;;   :ensure nil
+;;   :init (setq org-ref-insert-link-function 'org-ref-insert-link-hydra/body
+;; 	      org-ref-insert-cite-function 'org-ref-cite-insert-ivy
+;; 	      org-ref-insert-label-function 'org-ref-insert-label-link
+;; 	      org-ref-insert-ref-function 'org-ref-insert-ref-link
+;; 	      org-ref-cite-onclick-function (lambda (_) (org-ref-citation-hydra/body))))
 
 (use-package org
   :custom
@@ -230,7 +231,6 @@
   )
 
 (setq-default ispell-program-name "aspell")
-
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
