@@ -10,6 +10,21 @@
 (setq read-process-output-max (* 1024 1024)) ;; 1mb
 (setq gc-cons-threshold 100000000)
 
+;; デフォルトのフォントサイズを設定
+(when (eq system-type 'darwin)
+  (set-face-attribute 'default nil :height 160)
+  )
+
+;; バックアップファイルを作成しない
+(setq make-backup-files nil)
+
+;; 改行を末尾に挿入する
+(setq require-final-newline t)
+
+;; 最終行以降の新しい行をトリミングする
+(setq-default delete-trailing-lines t)
+(add-hook 'before-save-hook 'delete-trailing-whitespace)
+
 (defvar user-home-directory (file-name-as-directory (getenv "HOME")))
 
 (require 'package)
@@ -20,18 +35,77 @@
   (require 'use-package)
   )
 
+;; straight.el
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name
+        "straight/repos/straight.el/bootstrap.el"
+        (or (bound-and-true-p straight-base-dir)
+            user-emacs-directory)))
+      (bootstrap-version 7))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+
 (use-package julia-mode
+  :ensure t
   :mode "\\.jl\\'"
   :interpreter "julia"
   )
 
 (use-package rust-mode
+  :ensure t
   :mode "\\.rs\\'"
   :interpreter "rust")
 
 (use-package python-mode
+  :ensure t
   :mode "\\.py\\'"
-  :interpreter "python")
+  :interpreter "python"
+  :init
+  (defun my/python-mode-setup ()
+    (add-hook 'before-save-hook
+              (lambda ()
+                (when (and (eq major-mode 'python-mode)
+                           (bound-and-true-p lsp-mode)
+                           (lsp-feature? "textDocument/codeAction"))
+                  ;; (lsp-format-buffer)
+                  (lsp-organize-imports)
+                  )
+                )
+              )
+    )
+  :hook
+  (python-mode . my/python-mode-setup)
+  )
+
+(use-package yaml-mode
+  :ensure t
+  :mode
+  ("\\.yaml\\'" . yaml-mode)
+  ("\\.yml\\'" . yaml-mode)
+  :interpreter "yaml")
+
+(use-package js2-mode
+  :ensure t
+  :mode "\\.js\\'"
+  :interpreter "node")
+
+(use-package typescript-mode
+  :ensure t
+  :mode "\\.ts\\'")
+
+(use-package vue-mode
+  :ensure t
+  :mode "\\.vue\\'")
+
+(use-package cfn-mode
+  :ensure t)
 
 (use-package ivy
   :config
@@ -48,7 +122,8 @@
   (counsel-mode 1)
   )
 
-(use-package magit)
+(use-package magit
+  :ensure t)
 
 (use-package flycheck
   :custom
@@ -67,59 +142,193 @@
   (yas-global-mode 1)
   )
 
-(use-package lsp-julia
-  :init
-  (when (eq system-type 'gnu/linux)
-    (setq lsp-julia-command "apptainer")
-    (setq lsp-julia-package-dir "/opt/julia")
+;; macos の環境下で実行する
+(when (eq system-type 'darwin)
+
+  ;; Github Copilot
+  (use-package copilot
+    :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
+    :ensure t
+    :hook
+    (prog-mode . copilot-mode)
+    :bind (:map copilot-completion-map
+                ("<tab>" . 'copilot-accept-completion)
+                ("TAB" . 'copilot-accept-completion)
+                ("C-TAB" . 'copilot-accept-completion-by-word)
+                ("C-<tab>" . 'copilot-accept-completion-by-word))
     )
-  (setq lsp-julia-default-environment "~/.julia/environments/v1.10")
-  (defun lsp-julia--rls-command ()
-    "The command to lauch the Julia Language Server."
-    `(,lsp-julia-command
-      ,@lsp-julia-flags
-      ,(concat "-e "
-               "\"import Pkg; Pkg.instantiate(); "
-               "using LanguageServer, LanguageServer.SymbolServer; "
-               "server = LanguageServer.LanguageServerInstance("
-               "stdin, stdout, "
-               "\"" (lsp-julia--get-root) "\", "
-               "\"" (lsp-julia--get-depot-path) "\", "
-               "nothing, "
-               "\"" (lsp-julia--symbol-server-store-path-to-jl) "\"); "
-               "run(server);\"")))
-  :config
-  (when (eq system-type 'gnu/linux)
+
+  (use-package lsp-ruff-lsp
+    :custom
+    (lsp-ruff-lsp-server-command `(,(concat user-home-directory
+                                            "Software/ruff_lsp/bin/ruff-lsp")))
+    (lsp-ruff-lsp-ruff-path (vector (concat user-home-directory
+                                            "Software/ruff_lsp/bin/ruff")))
+    (lsp-ruff-lsp-ruff-args (vector "--config" "~/.ruff.toml"))
+    (lsp-ruff-lsp-show-notifications "always")
+    )
+
+  (use-package reformatter
+    :ensure t
+    :config
+    (reformatter-define ruff-format
+      :program "~/Software/ruff_lsp/bin/ruff"
+      :args (list "format" "--config" "~/.ruff.toml" "--stdin-filename" (or (buffer-file-name) input-file))
+      :lighter " RuffFmt"
+      :group 'ruff-format)
+    (add-hook 'python-mode-hook 'ruff-format-on-save-mode)
+    )
+
+  (use-package lsp-pyright
+    :ensure t
+    :custom
+    (lsp-pyright-diagnostic-mode  "workspace")
+    (lsp-pyright-typechecking-mode "strict")
+    (lsp-pyright-python-executable-cmd "python3")
+    (lsp-pyright-auto-import-completions nil)
+    (lsp-pyright-use-library-code-for-types t)
+    (lsp-pyright-stub-path (concat user-home-directory "Software/python-type-stubs"))
+    :config
+    (let ((client (gethash 'pyright lsp-clients)))
+      (setf (lsp--client-new-connection client)
+            (lsp-stdio-connection (lambda ()
+                                    (cons (concat user-home-directory
+                                                  "Software/pyright_lsp/bin/pyright-langserver")
+                                          lsp-pyright-langserver-command-args))))
+      (setf (lsp--client-add-on? client) t)
+      (setf (lsp--client-priority client) -2))
+    )
+
+  (use-package lsp-yaml
+    :custom
+    (lsp-yaml-validate nil)
+    (lsp-yaml-custom-tags (vector
+                           "!And"
+                           "!If"
+                           "!Not"
+                           "!Equals"
+                           "!Or"
+                           "!FindInMap"
+                           "!Base64"
+                           "!Cidr"
+                           "!Ref"
+                           "!Sub"
+                           "!GetAtt"
+                           "!GetAZs"
+                           "!ImportValue"
+                           "!Select"
+                           "!Split"
+                           "!Join"
+                           "!And sequence"
+                           "!If sequence"
+                           "!Not sequence"
+                           "!Equals sequence"
+                           "!Or sequence"
+                           "!FindInMap sequence"
+                           "!Join sequence"
+                           "!Sub sequence"
+                           "!ImportValue sequence"
+                           "!Select sequence"
+                           "!Split sequence"
+                           )
+                          )
+    :config
+    (let ((client (gethash 'yamlls lsp-clients)))
+      (setf (lsp--client-add-on? client) t))
+    )
+
+  (use-package lsp-cfn
+    :ensure t
+    :custom
+    (lsp-cfn-executable (concat user-home-directory
+                                "Software/cfn_lsp/bin/cfn-lsp-extra"))
+    :init
+    (defun lsp-cfn--rls-command ()
+      `(,lsp-cfn-executable)
+      )
+    :magic (("\\({\n *\\)? *[\"']AWSTemplateFormatVersion" . lsp-cfn-json-mode)
+            ;; SAM templates are also supported
+            ("\\({\n *\\)? *[\"']Transform[\"']: [\"']AWS::Serverless-2016-10-31" . lsp-cfn-json-mode)
+            ("\\(---\n\\)?AWSTemplateFormatVersion:" . lsp-cfn-yaml-mode)
+            ("\\(---\n\\)?Transform: AWS::Serverless-2016-10-31" . lsp-cfn-yaml-mode))
+    :hook
+    (lsp-cfn-yaml-mode . (lambda ()
+                           (let ((client (gethash 'yamlls lsp-clients)))
+                             (when client
+                               (when (not (gethash 'yamlls-cfn lsp-clients nil))
+                                 (puthash 'yamlls-cfn (copy-lsp--client client) lsp-clients)
+                                 (let ((new-client (gethash 'yamlls-cfn lsp-clients nil)))
+                                   (setf (lsp--client-server-id new-client) 'yamlls-cfn)
+                                   (setf (lsp--client-add-on? new-client) t)
+                                   (setf (lsp--client-priority new-client) 0)
+                                   (setf (lsp--client-activation-fn new-client) (lsp-activate-on "cloudformation"))
+                                   )
+                                 )
+                               )
+                             )
+                           (lsp-deferred)
+                           )
+                       )
+    :config
+    (let ((client (gethash 'cfn-extra lsp-clients)))
+      (setf (lsp--client-new-connection client)
+            (lsp-stdio-connection 'lsp-cfn--rls-command))
+      (setf (lsp--client-add-on? client) t)
+      (setf (lsp--client-priority client) 0))
+    )
+  )
+
+(when (eq system-type 'gnu/linux)
+
+  (use-package lsp-julia
+    :init
+    (when (eq system-type 'gnu/linux)
+      (setq lsp-julia-command "apptainer")
+      (setq lsp-julia-package-dir "/opt/julia")
+      )
+    (setq lsp-julia-default-environment "~/.julia/environments/v1.10")
+    (defun lsp-julia--rls-command ()
+      "The command to lauch the Julia Language Server."
+      `(,lsp-julia-command
+        ,@lsp-julia-flags
+        ,(concat "-e "
+                 "\"import Pkg; Pkg.instantiate(); "
+                 "using LanguageServer, LanguageServer.SymbolServer; "
+                 "server = LanguageServer.LanguageServerInstance("
+                 "stdin, stdout, "
+                 "\"" (lsp-julia--get-root) "\", "
+                 "\"" (lsp-julia--get-depot-path) "\", "
+                 "nothing, "
+                 "\"" (lsp-julia--symbol-server-store-path-to-jl) "\"); "
+                 "run(server);\"")))
+    :config
     (setq lsp-julia-flags `("exec"
                             ,(concat user-home-directory
                                      "dotfiles/images/"
                                      "julia_language_server.sif")
                             "julia"
                             ,@lsp-julia-flags))
+
+  (use-package lsp-pylsp
+    :custom
+    (lsp-pylsp-plugins-rope-autoimport-enabled t)
+    (lsp-pylsp-plugins-rope-completion-enabled t)
+    (lsp-pylsp-plugins-ruff-enabled t)
+    (lsp-pylsp-plugins-yapf-enabled t)
+    :init
+    (setq lsp-pylsp-server-command
+          (cond ((eq system-type 'gnu/linux)
+                 `("apptainer"
+                   "run"
+                   ,(concat user-home-directory
+                            "dotfiles/images/"
+                            "python_language_server.sif")))
+                ((eq system-type 'darwin)
+                 `(,(concat user-home-directory
+                            "Software/python_lsp/bin/pylsp")))
+                ))
     )
-  )
 
-(use-package lsp-pylsp
-  :custom
-  (lsp-pylsp-plugins-rope-autoimport-enabled t)
-  (lsp-pylsp-plugins-rope-completion-enabled t)
-  (lsp-pylsp-plugins-ruff-enabled t)
-  (lsp-pylsp-plugins-yapf-enabled t)
-  :init
-  (setq lsp-pylsp-server-command
-        (cond ((eq system-type 'gnu/linux)
-               `("apptainer"
-                 "run"
-                 ,(concat user-home-directory
-                          "dotfiles/images/"
-                          "python_language_server.sif")))
-              ((eq system-type 'darwin)
-               `(,(concat user-home-directory
-                          "Software/python_lsp/bin/pylsp")))
-              ))
-  )
-
-(when (eq system-type 'gnu/linux)
   (use-package lsp-tex
     :init
     (setq lsp-clients-texlab-executable "apptainer")
@@ -164,49 +373,13 @@
   (julia-mode . lsp)
   (tex-mode . lsp)
   (python-mode . lsp)
+  (yaml-mode . lsp)
+  (vue-mode . lsp)
+  (typescript-mode . lsp)
+  (js2-mode . lsp)
+  (lsp-cfn-json-mode . lsp)
   :commands lsp
   )
-
-;; (use-package ivy-bibtex
-;;   :init
-;;   (setq bibtex-completion-additional-search-fields '(keywords)
-;; 	bibtex-completion-display-formats
-;; 	'((article       . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${journal:40}")
-;; 	  (inbook        . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} Chapter ${chapter:32}")
-;; 	  (incollection  . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${booktitle:40}")
-;; 	  (inproceedings . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${booktitle:40}")
-;; 	  (t             . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*}"))
-;; 	bibtex-completion-pdf-open-function
-;; 	(lambda (fpath)
-;; 	  (call-process "open" nil 0 nil fpath))))
-
-;; (use-package org-ref
-;;   :ensure nil
-;;   :init
-;;   (require 'bibtex)
-;;   (setq bibtex-autokey-year-length 4
-;; 	bibtex-autokey-name-year-separator "-"
-;; 	bibtex-autokey-year-title-separator "-"
-;; 	bibtex-autokey-titleword-separator "-"
-;; 	bibtex-autokey-titlewords 2
-;; 	bibtex-autokey-titlewords-stretch 1
-;; 	bibtex-autokey-titleword-length 5)
-;;   (define-key bibtex-mode-map (kbd "H-b") 'org-ref-bibtex-hydra/body)
-;;   (define-key org-mode-map (kbd "C-c ]") 'org-ref-insert-link)
-;;   (define-key org-mode-map (kbd "s-[") 'org-ref-insert-link-hydra/body)
-;;   (require 'org-ref-ivy)
-;;   (require 'org-ref-arxiv)
-;;   (require 'org-ref-scopus)
-;;   (require 'org-ref-wos))
-
-
-;; (use-package org-ref-ivy
-;;   :ensure nil
-;;   :init (setq org-ref-insert-link-function 'org-ref-insert-link-hydra/body
-;; 	      org-ref-insert-cite-function 'org-ref-cite-insert-ivy
-;; 	      org-ref-insert-label-function 'org-ref-insert-label-link
-;; 	      org-ref-insert-ref-function 'org-ref-insert-ref-link
-;; 	      org-ref-cite-onclick-function (lambda (_) (org-ref-citation-hydra/body))))
 
 (use-package org
   :custom
@@ -221,8 +394,6 @@
 ;; docker
 (use-package docker
   :bind ("C-c d" . docker))
-
-
 
 (column-number-mode 1)
 
@@ -245,7 +416,7 @@
  ;; If there is more than one, they won't work right.
  '(org-agenda-files nil)
  '(package-selected-packages
-   '(docker dockerfile-mode python-mode ivy-bibtex org-ref rust-mode lsp-ivy counsel lsp-ui company flycheck lsp-julia lsp-mode pyvenv use-package yasnippet cmake-mode magit julia-mode)))
+   '(reformatter lsp-cfn cfn-mode vue-mode js2-mode typescript-mode yaml-mode docker dockerfile-mode python-mode ivy-bibtex org-ref rust-mode lsp-ivy counsel lsp-ui company flycheck lsp-julia lsp-mode pyvenv use-package yasnippet cmake-mode magit julia-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
