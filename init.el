@@ -308,6 +308,7 @@
                                      "julia_language_server.sif")
                             "julia"
                             ,@lsp-julia-flags))
+    )
 
   (use-package lsp-pylsp
     :custom
