@@ -131,7 +131,7 @@
   :init
   (global-flycheck-mode)
   :config
-  (setq flycheck-python-ruff-config (cons "~/.ruff.toml" flycheck-python-ruff-config))
+  (setq flycheck-python-ruff-config (cons "~/dotfiles/ruff.toml" flycheck-python-ruff-config))
   (when (eq system-type 'gnu/linux)
     (setf (get 'python-ruff
                (flycheck--checker-property-name 'command))
@@ -353,13 +353,13 @@
                        "/opt/ruff/bin/ruff"
                        "format"
                        "--config"
-                       "~/.ruff.toml"
+                       "~/dotfiles/ruff.toml"
                        "--stdin-filename"
                        (or (buffer-file-name) input-file)))
                 ((eq system-type 'darwin)
                  (list "format"
                        "--config"
-                       "~/.ruff.toml"
+                       "~/dotfiles/ruff.toml"
                        "--stdin-filename"
                        (or (buffer-file-name) input-file))))
     :lighter " RuffFmt"
@@ -390,7 +390,7 @@
                                 )
                           )
   (lsp-ruff-lsp-ruff-args (vector "--config"
-                                  "~/.ruff.toml"))
+                                  "~/dotfiles/ruff.toml"))
   (lsp-ruff-lsp-show-notifications "always")
   )
 
