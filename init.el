@@ -108,6 +108,7 @@
   :ensure t)
 
 (use-package ivy
+  :ensure t
   :config
   (ivy-mode 1)
   (setq ivy-use-virtual-buffers t)
@@ -118,6 +119,7 @@
   )
 
 (use-package counsel
+  :ensure t
   :config
   (counsel-mode 1)
   )
@@ -126,6 +128,7 @@
   :ensure t)
 
 (use-package flycheck
+  :ensure t
   :custom
   (flycheck-gfortran-language-standard "f2018")
   :init
@@ -145,16 +148,19 @@
   )
 
 (use-package company
+  :ensure t
   :config
   (global-company-mode)
   )
 
 (use-package yasnippet
+  :ensure t
   :config
   (yas-global-mode 1)
   )
 
 (use-package lsp-mode
+  :ensure t
   :hook
   (f90-mode . lsp)
   (rust-mode . lsp)
