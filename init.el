@@ -130,6 +130,18 @@
   (flycheck-gfortran-language-standard "f2018")
   :init
   (global-flycheck-mode)
+  :config
+  (setq flycheck-python-ruff-config (cons "~/.ruff.toml" flycheck-python-ruff-config))
+  (when (eq system-type 'gnu/linux)
+    (setf (get 'python-ruff
+               (flycheck--checker-property-name 'command))
+          (append `("apptainer"
+                    "exec"
+                    ,(concat user-home-directory
+                             "dotfiles/images/python_ruff.sif")
+                    "/opt/ruff/bin/ruff")
+                  (cdr (flycheck-checker-get 'python-ruff 'command))))
+    )
   )
 
 (use-package company
@@ -140,6 +152,21 @@
 (use-package yasnippet
   :config
   (yas-global-mode 1)
+  )
+
+(use-package lsp-mode
+  :hook
+  (f90-mode . lsp)
+  (rust-mode . lsp)
+  (julia-mode . lsp)
+  (tex-mode . lsp)
+  (python-mode . lsp)
+  (yaml-mode . lsp)
+  (vue-mode . lsp)
+  (typescript-mode . lsp)
+  (js2-mode . lsp)
+  (lsp-cfn-json-mode . lsp)
+  :commands lsp
   )
 
 ;; macos の環境下で実行する
@@ -156,47 +183,6 @@
                 ("TAB" . 'copilot-accept-completion)
                 ("C-TAB" . 'copilot-accept-completion-by-word)
                 ("C-<tab>" . 'copilot-accept-completion-by-word))
-    )
-
-  (use-package lsp-ruff-lsp
-    :custom
-    (lsp-ruff-lsp-server-command `(,(concat user-home-directory
-                                            "Software/ruff_lsp/bin/ruff-lsp")))
-    (lsp-ruff-lsp-ruff-path (vector (concat user-home-directory
-                                            "Software/ruff_lsp/bin/ruff")))
-    (lsp-ruff-lsp-ruff-args (vector "--config" "~/.ruff.toml"))
-    (lsp-ruff-lsp-show-notifications "always")
-    )
-
-  (use-package reformatter
-    :ensure t
-    :config
-    (reformatter-define ruff-format
-      :program "~/Software/ruff_lsp/bin/ruff"
-      :args (list "format" "--config" "~/.ruff.toml" "--stdin-filename" (or (buffer-file-name) input-file))
-      :lighter " RuffFmt"
-      :group 'ruff-format)
-    (add-hook 'python-mode-hook 'ruff-format-on-save-mode)
-    )
-
-  (use-package lsp-pyright
-    :ensure t
-    :custom
-    (lsp-pyright-diagnostic-mode  "workspace")
-    (lsp-pyright-typechecking-mode "strict")
-    (lsp-pyright-python-executable-cmd "python3")
-    (lsp-pyright-auto-import-completions nil)
-    (lsp-pyright-use-library-code-for-types t)
-    (lsp-pyright-stub-path (concat user-home-directory "Software/python-type-stubs"))
-    :config
-    (let ((client (gethash 'pyright lsp-clients)))
-      (setf (lsp--client-new-connection client)
-            (lsp-stdio-connection (lambda ()
-                                    (cons (concat user-home-directory
-                                                  "Software/pyright_lsp/bin/pyright-langserver")
-                                          lsp-pyright-langserver-command-args))))
-      (setf (lsp--client-add-on? client) t)
-      (setf (lsp--client-priority client) -2))
     )
 
   (use-package lsp-yaml
@@ -281,13 +267,19 @@
 (when (eq system-type 'gnu/linux)
 
   (use-package lsp-julia
-    :init
-    (when (eq system-type 'gnu/linux)
-      (setq lsp-julia-command "apptainer")
-      (setq lsp-julia-package-dir "/opt/julia")
-      )
-    (setq lsp-julia-default-environment "~/.julia/environments/v1.10")
-    (defun lsp-julia--rls-command ()
+    :custom
+    (lsp-julia-command "apptainer")
+    (lsp-julia-package-dir "/opt/julia")
+    (lsp-julia-default-environment "~/.julia/environments/v1.10")
+    :config
+    (setq lsp-julia-flags `("exec"
+                            ,(concat user-home-directory
+                                     "dotfiles/images/"
+                                     "julia_language_server.sif")
+                            "julia"
+                            ,@lsp-julia-flags)
+          )
+    (defun my-lsp-julia--rls-command ()
       "The command to lauch the Julia Language Server."
       `(,lsp-julia-command
         ,@lsp-julia-flags
@@ -300,35 +292,16 @@
                  "\"" (lsp-julia--get-depot-path) "\", "
                  "nothing, "
                  "\"" (lsp-julia--symbol-server-store-path-to-jl) "\"); "
-                 "run(server);\"")))
-    :config
-    (setq lsp-julia-flags `("exec"
-                            ,(concat user-home-directory
-                                     "dotfiles/images/"
-                                     "julia_language_server.sif")
-                            "julia"
-                            ,@lsp-julia-flags))
+                 "run(server);\""))
+      )
+    (let ((client (gethash 'julia-ls lsp-clients)))
+      (setf
+       (lsp--client-new-connection client)
+       (lsp-stdio-connection 'my-lsp-julia--rls-command)
+       )
+      )
     )
 
-  (use-package lsp-pylsp
-    :custom
-    (lsp-pylsp-plugins-rope-autoimport-enabled t)
-    (lsp-pylsp-plugins-rope-completion-enabled t)
-    (lsp-pylsp-plugins-ruff-enabled t)
-    (lsp-pylsp-plugins-yapf-enabled t)
-    :init
-    (setq lsp-pylsp-server-command
-          (cond ((eq system-type 'gnu/linux)
-                 `("apptainer"
-                   "run"
-                   ,(concat user-home-directory
-                            "dotfiles/images/"
-                            "python_language_server.sif")))
-                ((eq system-type 'darwin)
-                 `(,(concat user-home-directory
-                            "Software/python_lsp/bin/pylsp")))
-                ))
-    )
 
   (use-package lsp-tex
     :init
@@ -365,22 +338,104 @@
                                              "dotfiles/images/"
                                              "fortran_language_server.sif")))
     )
+
   )
 
-(use-package lsp-mode
-  :hook
-  (f90-mode . lsp)
-  (rust-mode . lsp)
-  (julia-mode . lsp)
-  (tex-mode . lsp)
-  (python-mode . lsp)
-  (yaml-mode . lsp)
-  (vue-mode . lsp)
-  (typescript-mode . lsp)
-  (js2-mode . lsp)
-  (lsp-cfn-json-mode . lsp)
-  :commands lsp
+(use-package reformatter
+  :ensure t
+  :config
+  (reformatter-define ruff-format
+    :program (cond ((eq system-type 'gnu/linux) "apptainer")
+                   ((eq system-type 'darwin) "~/Software/ruff_lsp/bin/ruff"))
+    :args (cond ((eq system-type 'gnu/linux)
+                 (list "exec"
+                       (concat user-home-directory "dotfiles/images/python_ruff.sif")
+                       "/opt/ruff/bin/ruff"
+                       "format"
+                       "--config"
+                       "~/.ruff.toml"
+                       "--stdin-filename"
+                       (or (buffer-file-name) input-file)))
+                ((eq system-type 'darwin)
+                 (list "format"
+                       "--config"
+                       "~/.ruff.toml"
+                       "--stdin-filename"
+                       (or (buffer-file-name) input-file))))
+    :lighter " RuffFmt"
+    :group 'ruff-format)
+  (add-hook 'python-mode-hook 'ruff-format-on-save-mode)
   )
+
+
+(use-package lsp-ruff-lsp
+  :custom
+  (lsp-ruff-lsp-server-command (cond ((eq system-type 'gnu/linux)
+                                      `("apptainer"
+                                        "exec"
+                                        ,(concat user-home-directory
+                                                 "dotfiles/images/python_ruff.sif")
+                                        "/opt/ruff/bin/ruff-lsp"
+                                        ))
+                                     ((eq system-type 'darwin)
+                                      `(,(concat user-home-directory
+                                                 "Software/ruff_lsp/bin/ruff-lsp")))
+                                      )
+                               )
+  (lsp-ruff-lsp-ruff-path (cond ((eq system-type 'gnu/linux)
+                                 (vector "/opt/ruff/bin/ruff"))
+                                ((eq system-type 'darwin)
+                                 (vector (concat user-home-directory
+                                                 "Software/ruff_lsp/bin/ruff")))
+                                )
+                          )
+  (lsp-ruff-lsp-ruff-args (vector "--config"
+                                  "~/.ruff.toml"))
+  (lsp-ruff-lsp-show-notifications "always")
+  )
+
+(use-package lsp-pyright
+  :ensure t
+  :custom
+  (lsp-pyright-diagnostic-mode  "workspace")
+  (lsp-pyright-typechecking-mode "strict")
+  (lsp-pyright-python-executable-cmd "python3")
+  (lsp-pyright-auto-import-completions nil)
+  (lsp-pyright-use-library-code-for-types t)
+  (lsp-pyright-stub-path (cond ((eq system-type 'gnu/linux)
+                                (concat user-home-directory "/opt/python-type-stubs/stubs")
+                                )
+                               ((eq system-type 'darwin)
+                                (concat user-home-directory "Software/python-type-stubs/stubs")
+                                )
+                               )
+                         )
+  :config
+  (let ((client (gethash 'pyright lsp-clients)))
+    (setf (lsp--client-new-connection client)
+          (lsp-stdio-connection (cond ((eq system-type 'gnu/linux)
+                                       (lambda ()
+                                         (append `("apptainer"
+                                                   "exec"
+                                                   ,(concat user-home-directory
+                                                            "dotfiles/images/python_pyright.sif")
+                                                   "/opt/pyright/bin/pyright-langserver")
+                                                 lsp-pyright-langserver-command-args
+                                                 )
+                                         )
+                                       )
+                                      ((eq system-type 'darwin)
+                                       (lambda ()
+                                         (cons (concat user-home-directory
+                                                       "Software/pyright_lsp/bin/pyright-langserver")
+                                               lsp-pyright-langserver-command-args))
+                                       )
+                                      )))
+    (setf (lsp--client-add-on? client) t)
+    (setf (lsp--client-priority client) -2))
+  )
+
+
 
 (use-package org
   :custom
@@ -415,9 +470,12 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(menu-bar-mode nil)
  '(org-agenda-files nil)
  '(package-selected-packages
-   '(reformatter lsp-cfn cfn-mode vue-mode js2-mode typescript-mode yaml-mode docker dockerfile-mode python-mode ivy-bibtex org-ref rust-mode lsp-ivy counsel lsp-ui company flycheck lsp-julia lsp-mode pyvenv use-package yasnippet cmake-mode magit julia-mode)))
+   '(reformatter lsp-cfn cfn-mode vue-mode js2-mode typescript-mode yaml-mode docker dockerfile-mode python-mode ivy-bibtex org-ref rust-mode lsp-ivy counsel lsp-ui company flycheck lsp-julia lsp-mode pyvenv use-package yasnippet cmake-mode magit julia-mode))
+ '(scroll-bar-mode nil)
+ '(tool-bar-mode nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

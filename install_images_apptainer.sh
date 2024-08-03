@@ -24,5 +24,10 @@ apptainer build \
 
 apptainer build \
           -F \
-	  images/python_language_server.sif \
-	  def_files/python_language_server.def
+	  images/python_pyright.sif \
+	  def_files/python_pyright.def
+
+apptainer build \
+          -F \
+	  images/python_ruff.sif \
+	  def_files/python_ruff.def
