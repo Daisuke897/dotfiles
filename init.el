@@ -176,7 +176,10 @@
   (julia-mode . lsp)
   (tex-mode . lsp)
   (python-mode . lsp)
-  (yaml-mode . lsp)
+  (yaml-mode . (lambda ()
+                 (if (eq major-mode 'cfn-mode)
+                     (lsp-ui-mode 1)
+                   (lsp))))
   (web-mode . lsp)
   :config
   (push 'semgrep-ls lsp-disabled-clients)
@@ -199,6 +202,7 @@
     )
 
   (use-package lsp-yaml
+    :requires lsp-mode
     :custom
     (lsp-yaml-validate nil)
     (lsp-yaml-custom-tags (vector
@@ -233,7 +237,32 @@
                           )
     :config
     (let ((client (gethash 'yamlls lsp-clients)))
-      (setf (lsp--client-add-on? client) t))
+      (setf
+       (lsp--client-add-on? client)
+       t))
+    )
+
+  (use-package cfn-mode
+    :ensure t
+    )
+
+  (use-package flycheck-cfn
+    :ensure t
+    :requires (cfn-mode flycheck)
+    :init
+    (defun my-flycheck-cfn-setup ()
+      (flycheck-cfn-setup)
+      (flycheck-select-checker 'cfn-lint)
+      (when (bound-and-true-p lsp-mode)
+        (lsp-disconnect)
+        )
+      )
+    :hook (cfn-mode . my-flycheck-cfn-setup)
+    :config
+    (setf (flycheck-checker-get 'cfn-lint 'command)
+          (append `(,(concat user-home-directory
+                             ".pyenv/shims/cfn-lint"))
+                  (cdr (flycheck-checker-get 'cfn-lint 'command))))
     )
 
   (use-package lsp-volar
@@ -244,10 +273,6 @@
     (puthash 'typescript
              `(,`(:system ,(concat user-home-directory "Software/vuejs/language-tools/node_modules/typescript/bin/tsserver")))
              lsp--dependencies)
-    ;; (puthash 'typescript
-    ;;          `(,`(:npm :package "typescript"
-    ;;                    :path "tsserver"))
-    ;;          lsp--dependencies)
     (puthash 'volar-language-server
              `(,`(:system ,(concat user-home-directory "Software/vuejs/language-tools/packages/language-server/bin/vue-language-server.js")))
              lsp--dependencies)
@@ -289,7 +314,6 @@
                  "stdin, stdout, "
                  "\"" (lsp-julia--get-root) "\", "
                  "\"" (lsp-julia--get-depot-path) "\", "
-                 "nothing, "
                  "\"" (lsp-julia--symbol-server-store-path-to-jl) "\"); "
                  "run(server);\""))
       )
