@@ -91,18 +91,27 @@
   ("\\.yml\\'" . yaml-mode)
   :interpreter "yaml")
 
-(use-package js2-mode
+(use-package web-mode
   :ensure t
-  :mode "\\.js\\'"
-  :interpreter "node")
+  :mode
+  ("\\.vue\\'" . web-mode)
+  :config
+  (setq web-mode-markup-indent-offset 2)
+  (setq web-mode-css-indent-offset 2)
+  (setq web-mode-code-indent-offset 2)
+  (setq web-mode-script-padding 0)
+  (setq web-mode-style-padding 0)
+  (setq web-mode-block-padding 0)
+  )
 
-(use-package typescript-mode
-  :ensure t
-  :mode "\\.ts\\'")
+;; (use-package js2-mode
+;;   :ensure t
+;;   :mode "\\.js\\'"
+;;   :interpreter "node")
 
-(use-package vue-mode
-  :ensure t
-  :mode "\\.vue\\'")
+;; (use-package typescript-mode
+;;   :ensure t
+;;   :mode "\\.ts\\'")
 
 (use-package cfn-mode
   :ensure t)
@@ -168,11 +177,9 @@
   (tex-mode . lsp)
   (python-mode . lsp)
   (yaml-mode . lsp)
-  (vue-mode . lsp)
-  (typescript-mode . lsp)
-  (js2-mode . lsp)
-  (lsp-cfn-json-mode . lsp)
-  :commands lsp
+  (web-mode . lsp)
+  :config
+  (push 'semgrep-ls lsp-disabled-clients)
   )
 
 ;; macos の環境下で実行する
@@ -229,44 +236,30 @@
       (setf (lsp--client-add-on? client) t))
     )
 
-  (use-package lsp-cfn
-    :ensure t
+  (use-package lsp-volar
     :custom
-    (lsp-cfn-executable (concat user-home-directory
-                                "Software/cfn_lsp/bin/cfn-lsp-extra"))
-    :init
-    (defun lsp-cfn--rls-command ()
-      `(,lsp-cfn-executable)
-      )
-    :magic (("\\({\n *\\)? *[\"']AWSTemplateFormatVersion" . lsp-cfn-json-mode)
-            ;; SAM templates are also supported
-            ("\\({\n *\\)? *[\"']Transform[\"']: [\"']AWS::Serverless-2016-10-31" . lsp-cfn-json-mode)
-            ("\\(---\n\\)?AWSTemplateFormatVersion:" . lsp-cfn-yaml-mode)
-            ("\\(---\n\\)?Transform: AWS::Serverless-2016-10-31" . lsp-cfn-yaml-mode))
-    :hook
-    (lsp-cfn-yaml-mode . (lambda ()
-                           (let ((client (gethash 'yamlls lsp-clients)))
-                             (when client
-                               (when (not (gethash 'yamlls-cfn lsp-clients nil))
-                                 (puthash 'yamlls-cfn (copy-lsp--client client) lsp-clients)
-                                 (let ((new-client (gethash 'yamlls-cfn lsp-clients nil)))
-                                   (setf (lsp--client-server-id new-client) 'yamlls-cfn)
-                                   (setf (lsp--client-add-on? new-client) t)
-                                   (setf (lsp--client-priority new-client) 0)
-                                   (setf (lsp--client-activation-fn new-client) (lsp-activate-on "cloudformation"))
-                                   )
-                                 )
-                               )
-                             )
-                           (lsp-deferred)
-                           )
-                       )
+    (lsp-volar-hybrid-mode t)
+    (lsp-volar-take-over-mode nil)
     :config
-    (let ((client (gethash 'cfn-extra lsp-clients)))
-      (setf (lsp--client-new-connection client)
-            (lsp-stdio-connection 'lsp-cfn--rls-command))
-      (setf (lsp--client-add-on? client) t)
-      (setf (lsp--client-priority client) 0))
+    (puthash 'typescript
+             `(,`(:system ,(concat user-home-directory "Software/vuejs/language-tools/node_modules/typescript/bin/tsserver")))
+             lsp--dependencies)
+    ;; (puthash 'typescript
+    ;;          `(,`(:npm :package "typescript"
+    ;;                    :path "tsserver"))
+    ;;          lsp--dependencies)
+    (puthash 'volar-language-server
+             `(,`(:system ,(concat user-home-directory "Software/vuejs/language-tools/packages/language-server/bin/vue-language-server.js")))
+             lsp--dependencies)
+    (with-eval-after-load 'lsp-javascript
+      (puthash 'typescript
+               `(,`(:system ,(concat user-home-directory "Software/vuejs/language-tools/node_modules/typescript/bin/tsserver")))
+               lsp--dependencies)
+      (puthash "typescript.tsdk"
+               `(,(lsp-volar-get-typescript-tsdk-path))
+               lsp-client-settings
+               )
+      )
     )
   )
 
@@ -441,7 +434,15 @@
     (setf (lsp--client-priority client) -2))
   )
 
-
+(use-package symbol-overlay
+  :ensure t
+  :config
+  (global-set-key (kbd "M-i") 'symbol-overlay-put)
+  (global-set-key (kbd "M-n") 'symbol-overlay-switch-forward)
+  (global-set-key (kbd "M-p") 'symbol-overlay-switch-backward)
+  (global-set-key (kbd "<f7>") 'symbol-overlay-mode)
+  (global-set-key (kbd "<f8>") 'symbol-overlay-remove-all)
+  )
 
 (use-package org
   :custom
