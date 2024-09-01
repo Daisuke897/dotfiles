@@ -291,6 +291,7 @@
 (when (eq system-type 'gnu/linux)
 
   (use-package lsp-julia
+    :requires lsp-mode
     :custom
     (lsp-julia-command "apptainer")
     (lsp-julia-package-dir "/opt/julia")
