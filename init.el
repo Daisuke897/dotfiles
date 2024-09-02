@@ -372,20 +372,20 @@
     :program (cond ((eq system-type 'gnu/linux) "apptainer")
                    ((eq system-type 'darwin) "~/Software/ruff_lsp/bin/ruff"))
     :args (cond ((eq system-type 'gnu/linux)
-                 (list "exec"
-                       (concat user-home-directory "dotfiles/images/python_ruff.sif")
-                       "/opt/ruff/bin/ruff"
-                       "format"
-                       "--config"
-                       "~/dotfiles/ruff.toml"
-                       "--stdin-filename"
-                       (or (buffer-file-name) input-file)))
+                 `("exec"
+                   (concat user-home-directory "dotfiles/images/python_ruff.sif")
+                   "/opt/ruff/bin/ruff"
+                   "format"
+                   "--config"
+                   "~/dotfiles/ruff.toml"
+                   "--stdin-filename"
+                   ,buffer-file-name "-"))
                 ((eq system-type 'darwin)
-                 (list "format"
-                       "--config"
-                       "~/dotfiles/ruff.toml"
-                       "--stdin-filename"
-                       (or (buffer-file-name) input-file))))
+                 `("format"
+                   "--config"
+                   "~/dotfiles/ruff.toml"
+                   "--stdin-filename"
+                   ,buffer-file-name "-")))
     :lighter " RuffFmt"
     :group 'ruff-format)
   (add-hook 'python-mode-hook 'ruff-format-on-save-mode)
