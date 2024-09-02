@@ -373,7 +373,7 @@
                    ((eq system-type 'darwin) "~/Software/ruff_lsp/bin/ruff"))
     :args (cond ((eq system-type 'gnu/linux)
                  `("exec"
-                   (concat user-home-directory "dotfiles/images/python_ruff.sif")
+                   ,(concat user-home-directory "dotfiles/images/python_ruff.sif")
                    "/opt/ruff/bin/ruff"
                    "format"
                    "--config"
