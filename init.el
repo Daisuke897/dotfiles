@@ -89,13 +89,17 @@
 
 (use-package yaml-mode
   :ensure t
+  :after lsp-mode
   :mode
   ("\\.yaml\\'" . yaml-mode)
   ("\\.yml\\'" . yaml-mode)
-  :interpreter "yaml")
+  :interpreter "yaml"
+  :hook
+  (yaml-mode . lsp))
 
 (use-package web-mode
   :ensure t
+  :after lsp-mode reformatter
   :mode
   ("\\.vue\\'" . web-mode)
   :config
@@ -105,19 +109,19 @@
   (setq web-mode-script-padding 0)
   (setq web-mode-style-padding 0)
   (setq web-mode-block-padding 0)
+  ;; web-modeかつ拡張子が.vueの場合にprettier-vueを実行する
+  (add-hook 'web-mode-hook
+            (lambda ()
+              (lsp)
+              (when (and (string= (file-name-extension buffer-file-name) "vue")
+                         (string= (file-name-extension (buffer-file-name (buffer-base-buffer))) "vue"))
+                (prettier-vue-on-save-mode))))
   )
 
-;; (use-package js2-mode
-;;   :ensure t
-;;   :mode "\\.js\\'"
-;;   :interpreter "node")
 
-;; (use-package typescript-mode
-;;   :ensure t
-;;   :mode "\\.ts\\'")
-
-(use-package cfn-mode
-  :ensure t)
+(use-package typescript-mode
+  :ensure t
+  :mode "\\.ts\\'")
 
 (use-package ivy
   :ensure t
@@ -143,6 +147,13 @@
   :ensure t
   :custom
   (flycheck-gfortran-language-standard "f2018")
+  :preface
+  (defvar-local flycheck-local-checkers nil)
+  (defun my/flycheck-checker-get(fn checker property)
+    (or (alist-get property (alist-get checker flycheck-local-checkers))
+        (funcall fn checker property)))
+  (advice-add 'flycheck-checker-get :around 'my/flycheck-checker-get)
+  (advice-add 'flycheck-eslint-config-exists-p :override (lambda() t))
   :init
   (global-flycheck-mode)
   :config
@@ -179,193 +190,446 @@
   (julia-mode . lsp)
   (tex-mode . lsp)
   (python-mode . lsp)
-  (yaml-mode . (lambda ()
-                 (if (eq major-mode 'cfn-mode)
-                     (lsp-ui-mode 1)
-                   (lsp))))
-  (web-mode . lsp)
   :config
   (push 'semgrep-ls lsp-disabled-clients)
   )
 
 ;; macos の環境下で実行する
-(when (eq system-type 'darwin)
 
-  ;; Github Copilot
-  (use-package copilot
-    :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
-    :ensure t
-    :hook
-    (prog-mode . copilot-mode)
-    :bind (:map copilot-completion-map
-                ("<tab>" . 'copilot-accept-completion)
-                ("TAB" . 'copilot-accept-completion)
-                ("C-TAB" . 'copilot-accept-completion-by-word)
-                ("C-<tab>" . 'copilot-accept-completion-by-word))
-    )
+;; Github Copilot
+(use-package copilot
+  :if (eq system-type 'darwin)
+  :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
+  :ensure t
+  :hook
+  (prog-mode . copilot-mode)
+  :bind (:map copilot-completion-map
+              ("<tab>" . 'copilot-accept-completion)
+              ("TAB" . 'copilot-accept-completion)
+              ("C-TAB" . 'copilot-accept-completion-by-word)
+              ("C-<tab>" . 'copilot-accept-completion-by-word))
+  :config
+  (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2))
+  (add-to-list 'copilot-indentation-alist '(lisp-interaction-mode 2))
+  )
 
-  (use-package lsp-yaml
-    :requires lsp-mode
-    :custom
-    (lsp-yaml-validate nil)
-    (lsp-yaml-custom-tags (vector
-                           "!And"
-                           "!If"
-                           "!Not"
-                           "!Equals"
-                           "!Or"
-                           "!FindInMap"
-                           "!Base64"
-                           "!Cidr"
-                           "!Ref"
-                           "!Sub"
-                           "!GetAtt"
-                           "!GetAZs"
-                           "!ImportValue"
-                           "!Select"
-                           "!Split"
-                           "!Join"
-                           "!And sequence"
-                           "!If sequence"
-                           "!Not sequence"
-                           "!Equals sequence"
-                           "!Or sequence"
-                           "!FindInMap sequence"
-                           "!Join sequence"
-                           "!Sub sequence"
-                           "!ImportValue sequence"
-                           "!Select sequence"
-                           "!Split sequence"
-                           )
-                          )
-    :config
-    (let ((client (gethash 'yamlls lsp-clients)))
-      (setf
-       (lsp--client-add-on? client)
-       t))
-    )
+;; Github Copilot Chat
+(use-package copilot-chat
+  :if (eq system-type 'darwin)
+  :straight (:host github :repo "chep/copilot-chat.el" :files ("*.el"))
+  :after (request)
+  :custom
+  (copilot-chat-frontend 'org)
+  )
 
-  (use-package cfn-mode
-    :ensure t
-    )
+(use-package flycheck-cfn
+  :if (eq system-type 'darwin)
+  :ensure t
+  :requires flycheck
+  :config
+  (setf (flycheck-checker-get 'cfn-lint 'command)
+        (append `(,(concat user-home-directory
+                           ".pyenv/shims/cfn-lint"))
+                (cdr (flycheck-checker-get 'cfn-lint 'command))))
+  )
 
-  (use-package flycheck-cfn
-    :ensure t
-    :requires (cfn-mode flycheck)
-    :init
-    (defun my-flycheck-cfn-setup ()
-      (flycheck-cfn-setup)
-      (flycheck-select-checker 'cfn-lint)
-      (when (bound-and-true-p lsp-mode)
-        (lsp-disconnect)
-        )
+(use-package cfn-mode
+  :if (eq system-type 'darwin)
+  :ensure t
+  :after (flycheck-cfn lsp-mode)
+  :init
+  (defun my-cfn-mode-setup ()
+    (flycheck-cfn-setup)
+    (when (derived-mode-p 'yaml-mode)
+      (princ "test\n")
+      (setq flycheck-local-checkers
+            '((lsp . ((next-checkers . (cfn-lint))))))
       )
-    :hook (cfn-mode . my-flycheck-cfn-setup)
-    :config
-    (setf (flycheck-checker-get 'cfn-lint 'command)
-          (append `(,(concat user-home-directory
-                             ".pyenv/shims/cfn-lint"))
-                  (cdr (flycheck-checker-get 'cfn-lint 'command))))
     )
+  :hook
+  (cfn-mode . my-cfn-mode-setup)
+  )
 
-  (use-package lsp-volar
-    :custom
-    (lsp-volar-hybrid-mode t)
-    (lsp-volar-take-over-mode nil)
-    :config
-    (puthash 'typescript
-             `(,`(:system ,(concat user-home-directory "Software/vuejs/language-tools/node_modules/typescript/bin/tsserver")))
-             lsp--dependencies)
-    (puthash 'volar-language-server
-             `(,`(:system ,(concat user-home-directory "Software/vuejs/language-tools/packages/language-server/bin/vue-language-server.js")))
-             lsp--dependencies)
-    (with-eval-after-load 'lsp-javascript
-      (puthash 'typescript
-               `(,`(:system ,(concat user-home-directory "Software/vuejs/language-tools/node_modules/typescript/bin/tsserver")))
-               lsp--dependencies)
-      (puthash "typescript.tsdk"
-               `(,(lsp-volar-get-typescript-tsdk-path))
-               lsp-client-settings
-               )
-      )
+(use-package lsp-yaml
+  :if (eq system-type 'darwin)
+  :after (lsp-mode gv)
+  :custom
+  (lsp-yaml-validate nil)
+  (lsp-yaml-custom-tags (vector
+                         "!And"
+                         "!If"
+                         "!Not"
+                         "!Equals"
+                         "!Or"
+                         "!FindInMap"
+                         "!Base64"
+                         "!Cidr"
+                         "!Ref"
+                         "!Sub"
+                         "!GetAtt"
+                         "!GetAZs"
+                         "!ImportValue"
+                         "!Select"
+                         "!Split"
+                         "!Join"
+                         "!And sequence"
+                         "!If sequence"
+                         "!Not sequence"
+                         "!Equals sequence"
+                         "!Or sequence"
+                         "!FindInMap sequence"
+                         "!Join sequence"
+                         "!Sub sequence"
+                         "!ImportValue sequence"
+                         "!Select sequence"
+                         "!Split sequence"
+                         )
+                        )
+  :config
+  (require 'lsp-mode)
+  (let ((client (copy-lsp--client (gethash 'yamlls lsp-clients))))
+    (puthash 'yamlls
+             (make-lsp--client
+              :language-id (lsp--client-language-id client)
+              ;; add-on? は t にする
+              :add-on? t
+              :new-connection (lsp--client-new-connection client)
+              :ignore-regexps (lsp--client-ignore-regexps client)
+              :ignore-messages (lsp--client-ignore-messages client)
+              :notification-handlers (lsp--client-notification-handlers client)
+              :request-handlers (lsp--client-request-handlers client)
+              :response-handlers (lsp--client-response-handlers client)
+              :prefix-function (lsp--client-prefix-function client)
+              :uri-handlers (lsp--client-uri-handlers client)
+              :action-handlers (lsp--client-action-handlers client)
+              :action-filter (lsp--client-action-filter client)
+              :major-modes (lsp--client-major-modes client)
+              :activation-fn (lsp--client-activation-fn client)
+              :priority (lsp--client-priority client)
+              :server-id (lsp--client-server-id client)
+              :multi-root (lsp--client-multi-root client)
+              :initialization-options (lsp--client-initialization-options client)
+              :semantic-tokens-faces-overrides (lsp--client-semantic-tokens-faces-overrides client)
+              :custom-capabilities (lsp--client-custom-capabilities client)
+              :library-folders-fn (lsp--client-library-folders-fn client)
+              :before-file-open-fn (lsp--client-before-file-open-fn client)
+              :initialized-fn (lsp--client-initialized-fn client)
+              :remote? (lsp--client-remote? client)
+              :completion-in-comments? (lsp--client-completion-in-comments? client)
+              :path->uri-fn (lsp--client-path->uri-fn client)
+              :uri->path-fn (lsp--client-uri->path-fn client)
+              :environment-fn (lsp--client-environment-fn client)
+              :after-open-fn (lsp--client-after-open-fn client)
+              :async-request-handlers (lsp--client-async-request-handlers client)
+              :download-server-fn (lsp--client-download-server-fn client)
+              :download-in-progress? (lsp--client-download-in-progress? client)
+              :buffers (lsp--client-buffers client)
+              :synchronize-sections (lsp--client-synchronize-sections client)
+              )
+             lsp-clients)
     )
   )
 
-(when (eq system-type 'gnu/linux)
-
-  (use-package lsp-julia
-    :requires lsp-mode
-    :custom
-    (lsp-julia-command "apptainer")
-    (lsp-julia-package-dir "/opt/julia")
-    (lsp-julia-default-environment "~/.julia/environments/v1.10")
-    :config
-    (setq lsp-julia-flags `("exec"
-                            ,(concat user-home-directory
-                                     "dotfiles/images/"
-                                     "julia_language_server.sif")
-                            "julia"
-                            ,@lsp-julia-flags)
-          )
-    (defun my-lsp-julia--rls-command ()
-      "The command to lauch the Julia Language Server."
-      `(,lsp-julia-command
-        ,@lsp-julia-flags
-        ,(concat "-e "
-                 "\"import Pkg; Pkg.instantiate(); "
-                 "using LanguageServer, LanguageServer.SymbolServer; "
-                 "server = LanguageServer.LanguageServerInstance("
-                 "stdin, stdout, "
-                 "\"" (lsp-julia--get-root) "\", "
-                 "\"" (lsp-julia--get-depot-path) "\", "
-                 "\"" (lsp-julia--symbol-server-store-path-to-jl) "\"); "
-                 "run(server);\""))
-      )
-    (let ((client (gethash 'julia-ls lsp-clients)))
-      (setf
-       (lsp--client-new-connection client)
-       (lsp-stdio-connection 'my-lsp-julia--rls-command)
-       )
-      )
+(use-package lsp-javascript
+  :if (eq system-type 'darwin)
+  :after lsp-mode
+  :preface
+  ;; Vue.js のファイルを開いたときにも js-ts lsp server を有効にする
+  (defun my/lsp-typescript-javascript-tsx-jsx-activate-p (filename &optional _)
+    "Check if the js-ts lsp server should be enabled based on FILENAME."
+    (or (string-match-p "\\.[cm]js\\|\\.[jt]sx?\\|\\.vue\\'" filename)
+        (and (derived-mode-p 'js-mode 'js-ts-mode 'typescript-mode 'typescript-ts-mode)
+             (not (derived-mode-p 'json-mode)))))
+  :custom
+  (lsp-typescript-locale "ja")
+  (lsp-clients-typescript-prefer-use-project-ts-server t)
+  (lsp-clients-typescript-plugins
+   (vector (list :name "@vue/typescript-plugin"
+                 :location (concat user-home-directory
+                                   "Software/vuejs/language-tools/packages/language-server/node_modules/@vue/typescript-plugin")
+                 :languages (vector "typescript" "javascript" "vue")))
+   )
+  :config
+  (puthash
+   'typescript
+   (remove '(:system "tsserver") (gethash 'typescript lsp--dependencies))
+   lsp--dependencies
+   )
+  (require 'lsp-mode)
+  (let ((client (copy-lsp--client (gethash 'ts-ls lsp-clients))))
+    (puthash 'ts-ls
+             (make-lsp--client
+              :language-id (lsp--client-language-id client)
+              ;; add-on? は t にする
+              :add-on? t
+              :new-connection (lsp--client-new-connection client)
+              :ignore-regexps (lsp--client-ignore-regexps client)
+              :ignore-messages (lsp--client-ignore-messages client)
+              :notification-handlers (lsp--client-notification-handlers client)
+              :request-handlers (lsp--client-request-handlers client)
+              :response-handlers (lsp--client-response-handlers client)
+              :prefix-function (lsp--client-prefix-function client)
+              :uri-handlers (lsp--client-uri-handlers client)
+              :action-handlers (lsp--client-action-handlers client)
+              :action-filter (lsp--client-action-filter client)
+              :major-modes (lsp--client-major-modes client)
+              ;; activation-fn は my/lsp-typescript-javascript-tsx-jsx-activate-p にする
+              :activation-fn 'my/lsp-typescript-javascript-tsx-jsx-activate-p
+              ;; priority は 0 にする
+              :priority 0
+              :server-id (lsp--client-server-id client)
+              :multi-root (lsp--client-multi-root client)
+              :initialization-options (lsp--client-initialization-options client)
+              :semantic-tokens-faces-overrides (lsp--client-semantic-tokens-faces-overrides client)
+              :custom-capabilities (lsp--client-custom-capabilities client)
+              :library-folders-fn (lsp--client-library-folders-fn client)
+              :before-file-open-fn (lsp--client-before-file-open-fn client)
+              :initialized-fn (lsp--client-initialized-fn client)
+              :remote? (lsp--client-remote? client)
+              :completion-in-comments? (lsp--client-completion-in-comments? client)
+              :path->uri-fn (lsp--client-path->uri-fn client)
+              :uri->path-fn (lsp--client-uri->path-fn client)
+              :environment-fn (lsp--client-environment-fn client)
+              :after-open-fn (lsp--client-after-open-fn client)
+              :async-request-handlers (lsp--client-async-request-handlers client)
+              :download-server-fn (lsp--client-download-server-fn client)
+              :download-in-progress? (lsp--client-download-in-progress? client)
+              :buffers (lsp--client-buffers client)
+              :synchronize-sections (lsp--client-synchronize-sections client)
+              )
+             lsp-clients)
     )
+  )
 
-
-  (use-package lsp-tex
-    :init
-    (setq lsp-clients-texlab-executable "apptainer")
-    (defun lsp-clients-texlab-args ()
-      `(,lsp-clients-texlab-executable
-        "run"
-        ,(concat user-home-directory
-                 "dotfiles/images/latex_language_server.sif"))
-      )
-    :config
-    (lsp-register-client
-     (make-lsp-client :new-connection (lsp-stdio-connection
-                                       (lsp-clients-texlab-args))
-                      :major-modes '(plain-tex-mode latex-mode)
-                      :priority (if (eq lsp-tex-server 'texlab) 1 -1)
-                      :server-id 'texlab)
-     )
+(use-package lsp-volar
+  :if (eq system-type 'darwin)
+  :after (lsp-mode lsp-javascript)
+  :custom
+  (lsp-volar-hybrid-mode t)
+  (lsp-volar-take-over-mode nil)
+  :config
+  (puthash
+   'typescript
+   (remove '(:system "tsserver") (gethash 'typescript lsp--dependencies))
+   lsp--dependencies
+   )
+  (puthash 'volar-language-server
+           `(,`(:system
+                ,(concat user-home-directory
+                         "Software/vuejs/language-tools/packages/language-server/bin/vue-language-server.js")))
+           lsp--dependencies)
+  (require 'lsp-mode)
+  (let ((client (copy-lsp--client (gethash 'vue-semantic-server lsp-clients))))
+    (puthash 'vue-semantic-server
+             (make-lsp--client
+              :language-id (lsp--client-language-id client)
+              ;; add-on? は t にする
+              :add-on? t
+              :new-connection (lsp--client-new-connection client)
+              :ignore-regexps (lsp--client-ignore-regexps client)
+              :ignore-messages (lsp--client-ignore-messages client)
+              :notification-handlers (lsp--client-notification-handlers client)
+              :request-handlers (lsp--client-request-handlers client)
+              :response-handlers (lsp--client-response-handlers client)
+              :prefix-function (lsp--client-prefix-function client)
+              :uri-handlers (lsp--client-uri-handlers client)
+              :action-handlers (lsp--client-action-handlers client)
+              :action-filter (lsp--client-action-filter client)
+              :major-modes (lsp--client-major-modes client)
+              :activation-fn (lsp--client-activation-fn client)
+              ;; priority は 0 にする
+              :priority 0
+              :server-id (lsp--client-server-id client)
+              :multi-root (lsp--client-multi-root client)
+              :initialization-options (lsp--client-initialization-options client)
+              :semantic-tokens-faces-overrides (lsp--client-semantic-tokens-faces-overrides client)
+              :custom-capabilities (lsp--client-custom-capabilities client)
+              :library-folders-fn (lsp--client-library-folders-fn client)
+              :before-file-open-fn (lsp--client-before-file-open-fn client)
+              :initialized-fn (lsp--client-initialized-fn client)
+              :remote? (lsp--client-remote? client)
+              :completion-in-comments? (lsp--client-completion-in-comments? client)
+              :path->uri-fn (lsp--client-path->uri-fn client)
+              :uri->path-fn (lsp--client-uri->path-fn client)
+              :environment-fn (lsp--client-environment-fn client)
+              :after-open-fn (lsp--client-after-open-fn client)
+              :async-request-handlers (lsp--client-async-request-handlers client)
+              :download-server-fn (lsp--client-download-server-fn client)
+              :download-in-progress? (lsp--client-download-in-progress? client)
+              :buffers (lsp--client-buffers client)
+              :synchronize-sections (lsp--client-synchronize-sections client)
+              )
+             lsp-clients)
     )
+  )
 
-  (use-package lsp-rust
-    :custom
-    (lsp-rust-analyzer-server-command
-     `("apptainer" "run" ,(concat user-home-directory
-                                  "dotfiles/images/"
-                                  "rust_language_server.sif")))
+(use-package lsp-eslint
+  :if (eq system-type 'darwin)
+  :after lsp-mode
+  :custom
+  (lsp-eslint-server-command
+   `("node"
+     ,(concat user-home-directory
+              "Software/vscode-eslint/server/out/eslintServer.js")
+     "--stdio")
+   )
+  :config
+  (require 'lsp-mode)
+  (let ((client (copy-lsp--client (gethash 'eslint lsp-clients))))
+    (puthash 'eslint
+             (make-lsp--client
+              :language-id (lsp--client-language-id client)
+              ;; add-on? は t にする
+              :add-on? t
+              :new-connection (lsp--client-new-connection client)
+              :ignore-regexps (lsp--client-ignore-regexps client)
+              :ignore-messages (lsp--client-ignore-messages client)
+              :notification-handlers (lsp--client-notification-handlers client)
+              :request-handlers (lsp--client-request-handlers client)
+              :response-handlers (lsp--client-response-handlers client)
+              :prefix-function (lsp--client-prefix-function client)
+              :uri-handlers (lsp--client-uri-handlers client)
+              :action-handlers (lsp--client-action-handlers client)
+              :action-filter (lsp--client-action-filter client)
+              :major-modes (lsp--client-major-modes client)
+              :activation-fn (lsp--client-activation-fn client)
+              ;; priority は 0 にする
+              :priority 0
+              :server-id (lsp--client-server-id client)
+              :multi-root (lsp--client-multi-root client)
+              :initialization-options (lsp--client-initialization-options client)
+              :semantic-tokens-faces-overrides (lsp--client-semantic-tokens-faces-overrides client)
+              :custom-capabilities (lsp--client-custom-capabilities client)
+              :library-folders-fn (lsp--client-library-folders-fn client)
+              :before-file-open-fn (lsp--client-before-file-open-fn client)
+              :initialized-fn (lsp--client-initialized-fn client)
+              :remote? (lsp--client-remote? client)
+              :completion-in-comments? (lsp--client-completion-in-comments? client)
+              :path->uri-fn (lsp--client-path->uri-fn client)
+              :uri->path-fn (lsp--client-uri->path-fn client)
+              :environment-fn (lsp--client-environment-fn client)
+              :after-open-fn (lsp--client-after-open-fn client)
+              :async-request-handlers (lsp--client-async-request-handlers client)
+              :download-server-fn (lsp--client-download-server-fn client)
+              :download-in-progress? (lsp--client-download-in-progress? client)
+              :buffers (lsp--client-buffers client)
+              :synchronize-sections (lsp--client-synchronize-sections client)
+              )
+             lsp-clients)
     )
+  )
 
-  (use-package lsp-fortran
-    :init
-    (setq lsp-clients-fortls-executable "apptainer")
-    (setq lsp-clients-fortls-args `("run"
-                                    ,(concat user-home-directory
-                                             "dotfiles/images/"
-                                             "fortran_language_server.sif")))
+;; Linux の環境下で実行する
+(use-package lsp-julia
+  :after lsp-mode
+  :if (eq system-type 'gnu/linux)
+  :preface
+  (defun my-lsp-julia--rls-command ()
+    "The command to lauch the Julia Language Server."
+    `(,lsp-julia-command
+      ,@lsp-julia-flags
+      ,(concat "-e "
+               "\"import Pkg; Pkg.instantiate(); "
+               "using LanguageServer, LanguageServer.SymbolServer; "
+               "server = LanguageServer.LanguageServerInstance("
+               "stdin, stdout, "
+               "\"" (lsp-julia--get-root) "\", "
+               "\"" (lsp-julia--get-depot-path) "\", "
+               "\"" (lsp-julia--symbol-server-store-path-to-jl) "\"); "
+               "run(server);\""))
     )
+  :custom
+  (lsp-julia-command "apptainer")
+  (lsp-julia-package-dir "/opt/julia")
+  (lsp-julia-default-environment "~/.julia/environments/v1.10")
+  :config
+  (setq lsp-julia-flags `("exec"
+                          ,(concat user-home-directory
+                                   "dotfiles/images/"
+                                   "julia_language_server.sif")
+                          "julia"
+                          ,@lsp-julia-flags)
+        )
+  (let ((client (copy-lsp--client (gethash 'julia-ls lsp-clients))))
+    (puthash 'julia-ls
+             (make-lsp--client
+              :language-id (lsp--client-language-id client)
+              :add-on? (lsp--client-add-on? client)
+              :new-connection (lsp-stdio-connection 'my-lsp-julia--rls-command)
+              :ignore-regexps (lsp--client-ignore-regexps client)
+              :ignore-messages (lsp--client-ignore-messages client)
+              :notification-handlers (lsp--client-notification-handlers client)
+              :request-handlers (lsp--client-request-handlers client)
+              :response-handlers (lsp--client-response-handlers client)
+              :prefix-function (lsp--client-prefix-function client)
+              :uri-handlers (lsp--client-uri-handlers client)
+              :action-handlers (lsp--client-action-handlers client)
+              :action-filter (lsp--client-action-filter client)
+              :major-modes (lsp--client-major-modes client)
+              :activation-fn (lsp--client-activation-fn client)
+              :priority (lsp--client-priority client)
+              :server-id (lsp--client-server-id client)
+              :multi-root (lsp--client-multi-root client)
+              :initialization-options (lsp--client-initialization-options client)
+              :semantic-tokens-faces-overrides (lsp--client-semantic-tokens-faces-overrides client)
+              :custom-capabilities (lsp--client-custom-capabilities client)
+              :library-folders-fn (lsp--client-library-folders-fn client)
+              :before-file-open-fn (lsp--client-before-file-open-fn client)
+              :initialized-fn (lsp--client-initialized-fn client)
+              :remote? (lsp--client-remote? client)
+              :completion-in-comments? (lsp--client-completion-in-comments? client)
+              :path->uri-fn (lsp--client-path->uri-fn client)
+              :uri->path-fn (lsp--client-uri->path-fn client)
+              :environment-fn (lsp--client-environment-fn client)
+              :after-open-fn (lsp--client-after-open-fn client)
+              :async-request-handlers (lsp--client-async-request-handlers client)
+              :download-server-fn (lsp--client-download-server-fn client)
+              :download-in-progress? (lsp--client-download-in-progress? client)
+              :buffers (lsp--client-buffers client)
+              :synchronize-sections (lsp--client-synchronize-sections client)
+              )
+             lsp-clients)
+    )
+  )
 
+
+(use-package lsp-tex
+  :if (eq system-type 'gnu/linux)
+  :init
+  (setq lsp-clients-texlab-executable "apptainer")
+  (defun lsp-clients-texlab-args ()
+    `(,lsp-clients-texlab-executable
+      "run"
+      ,(concat user-home-directory
+               "dotfiles/images/latex_language_server.sif"))
+    )
+  :config
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-stdio-connection
+                                     (lsp-clients-texlab-args))
+                    :major-modes '(plain-tex-mode latex-mode)
+                    :priority (if (eq lsp-tex-server 'texlab) 1 -1)
+                    :server-id 'texlab)
+   )
+  )
+
+(use-package lsp-rust
+  :if (eq system-type 'gnu/linux)
+  :custom
+  (lsp-rust-analyzer-server-command
+   `("apptainer" "run" ,(concat user-home-directory
+                                "dotfiles/images/"
+                                "rust_language_server.sif")))
+  )
+
+(use-package lsp-fortran
+  :if (eq system-type 'gnu/linux)
+  :init
+  (setq lsp-clients-fortls-executable "apptainer")
+  (setq lsp-clients-fortls-args `("run"
+                                  ,(concat user-home-directory
+                                           "dotfiles/images/"
+                                           "fortran_language_server.sif")))
   )
 
 (use-package reformatter
@@ -392,8 +656,13 @@
     :lighter " RuffFmt"
     :group 'ruff-format)
   (add-hook 'python-mode-hook 'ruff-format-on-save-mode)
-  )
 
+  (reformatter-define prettier-vue
+    :program "npx"
+    :args `("prettier" "--log-level" "error" "--no-color" "--parser" "vue")
+    :lighter " PrettierVue"
+    :group 'prettier-vue)
+  )
 
 (use-package lsp-ruff-lsp
   :custom
@@ -438,28 +707,66 @@
                                )
                          )
   :config
-  (let ((client (gethash 'pyright lsp-clients)))
-    (setf (lsp--client-new-connection client)
-          (lsp-stdio-connection (cond ((eq system-type 'gnu/linux)
-                                       (lambda ()
-                                         (append `("apptainer"
-                                                   "exec"
-                                                   ,(concat user-home-directory
-                                                            "dotfiles/images/python_pyright.sif")
-                                                   "/opt/pyright/bin/pyright-langserver")
-                                                 lsp-pyright-langserver-command-args
-                                                 )
-                                         )
-                                       )
-                                      ((eq system-type 'darwin)
-                                       (lambda ()
-                                         (cons (concat user-home-directory
-                                                       "Software/pyright_lsp/bin/pyright-langserver")
-                                               lsp-pyright-langserver-command-args))
-                                       )
-                                      )))
-    (setf (lsp--client-add-on? client) t)
-    (setf (lsp--client-priority client) -2))
+  (let ((client (copy-lsp--client (gethash 'pyright lsp-clients))))
+    (puthash 'pyright
+             (make-lsp--client
+              :language-id (lsp--client-language-id client)
+              ;; add-on? は t にする
+              :add-on? t
+              :new-connection
+              (lsp-stdio-connection (cond ((eq system-type 'gnu/linux)
+                                           (lambda ()
+                                             (append `("apptainer"
+                                                       "exec"
+                                                       ,(concat user-home-directory
+                                                                "dotfiles/images/python_pyright.sif")
+                                                       "/opt/pyright/bin/pyright-langserver")
+                                                     lsp-pyright-langserver-command-args
+                                                     )
+                                             )
+                                           )
+                                          ((eq system-type 'darwin)
+                                           (lambda ()
+                                             (cons (concat user-home-directory
+                                                           "Software/pyright_lsp/bin/pyright-langserver")
+                                                   lsp-pyright-langserver-command-args))
+                                           )
+                                          ))
+              :ignore-regexps (lsp--client-ignore-regexps client)
+              :ignore-messages (lsp--client-ignore-messages client)
+              :notification-handlers (lsp--client-notification-handlers client)
+              :request-handlers (lsp--client-request-handlers client)
+              :response-handlers (lsp--client-response-handlers client)
+              :prefix-function (lsp--client-prefix-function client)
+              :uri-handlers (lsp--client-uri-handlers client)
+              :action-handlers (lsp--client-action-handlers client)
+              :action-filter (lsp--client-action-filter client)
+              :major-modes (lsp--client-major-modes client)
+              :activation-fn (lsp--client-activation-fn client)
+              ;; priority は -2 にする
+              :priority -2
+              :server-id (lsp--client-server-id client)
+              :multi-root (lsp--client-multi-root client)
+              :initialization-options (lsp--client-initialization-options client)
+              :semantic-tokens-faces-overrides (lsp--client-semantic-tokens-faces-overrides client)
+              :custom-capabilities (lsp--client-custom-capabilities client)
+              :library-folders-fn (lsp--client-library-folders-fn client)
+              :before-file-open-fn (lsp--client-before-file-open-fn client)
+              :initialized-fn (lsp--client-initialized-fn client)
+              :remote? (lsp--client-remote? client)
+              :completion-in-comments? (lsp--client-completion-in-comments? client)
+              :path->uri-fn (lsp--client-path->uri-fn client)
+              :uri->path-fn (lsp--client-uri->path-fn client)
+              :environment-fn (lsp--client-environment-fn client)
+              :after-open-fn (lsp--client-after-open-fn client)
+              :async-request-handlers (lsp--client-async-request-handlers client)
+              :download-server-fn (lsp--client-download-server-fn client)
+              :download-in-progress? (lsp--client-download-in-progress? client)
+              :buffers (lsp--client-buffers client)
+              :synchronize-sections (lsp--client-synchronize-sections client)
+              )
+             lsp-clients)
+    )
   )
 
 (use-package symbol-overlay
