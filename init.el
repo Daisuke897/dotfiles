@@ -3,6 +3,9 @@
 ;;; my init file of Emacs
 ;;; Code:
 
+;; 全てのファイルは読み込み専用で開く
+(add-hook 'find-file-hook (lambda () (setq buffer-read-only t)))
+
 (setq-default inhibit-startup-screen t)
 (setq-default indent-tabs-mode nil)
 (setq-default show-trailing-whitespace t)
