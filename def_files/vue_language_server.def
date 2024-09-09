@@ -1,0 +1,26 @@
+Bootstrap: docker
+From: node:latest
+Stage: node
+
+%post
+
+apt update && apt upgrade -y && apt install git -y
+
+cd /opt
+
+npm install pnpm
+
+git clone https://github.com/vuejs/language-tools.git
+
+cd language-tools
+
+git checkout v2.1.6
+
+npx pnpm install && npx pnpm run build
+
+%runscript
+
+/opt/language-tools/packages/language-server/bin/vue-language-server.js --stdio
+
+%labels
+Author Daisuke Nakahara

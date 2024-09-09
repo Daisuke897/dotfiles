@@ -31,3 +31,18 @@ apptainer build \
           -F \
 	  images/python_ruff.sif \
 	  def_files/python_ruff.def
+
+apptainer build \
+          -F \
+          images/eslint_language_server.sif \
+          def_files/eslint_language_server.def
+
+apptainer build \
+          -F \
+          images/vue_language_server.sif \
+          def_files/vue_language_server.def
+
+apptainer build \
+          -F \
+          images/typescript_language_server.sif \
+          def_files/typescript_language_server.def

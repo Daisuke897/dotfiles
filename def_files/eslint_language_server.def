@@ -1,0 +1,24 @@
+Bootstrap: docker
+From: node:latest
+Stage: node
+
+%post
+
+apt update && apt upgrade -y && apt install git -y
+
+cd /opt
+
+git clone https://github.com/microsoft/vscode-eslint.git
+
+cd vscode-eslint
+
+git checkout release/3.0.10
+
+npm install && npm run webpack
+
+%runscript
+
+node /opt/vscode-eslint/server/out/eslintServer.js --stdio
+
+%labels
+Author Daisuke Nakahara
