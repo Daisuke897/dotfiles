@@ -330,7 +330,6 @@
   )
 
 (use-package lsp-javascript
-  :if (eq system-type 'darwin)
   :after lsp-mode
   :preface
   ;; Vue.js のファイルを開いたときにも js-ts lsp server を有効にする
@@ -344,10 +343,24 @@
   (lsp-clients-typescript-prefer-use-project-ts-server t)
   (lsp-clients-typescript-plugins
    (vector (list :name "@vue/typescript-plugin"
-                 :location (concat user-home-directory
-                                   "Software/vuejs/language-tools/packages/language-server/node_modules/@vue/typescript-plugin")
+                 :location (cond ((eq system-type 'darwin)
+                                  (concat user-home-directory
+                                          "Software/vuejs/language-tools/packages/language-server/node_modules/@vue/typescript-plugin")
+                                  )
+                                 ((eq system-type 'gnu/linux)
+                                  "/opt/language-tools/packages/language-server/node_modules/@vue/typescript-plugin"))
                  :languages (vector "typescript" "javascript" "vue")))
    )
+  (lsp-clients-typescript-tls-path (cond ((eq system-type 'gnu/linux)
+                                          "apptainer"
+                                          )
+                                         (t "typescript-language-server")))
+  (lsp-clients-typescript-server-args (cond ((eq system-type 'gnu/linux)
+                                             `("run"
+                                               ,(concat user-home-directory
+                                                        "dotfiles/images/typescript_language_server.sif"))
+                                             )
+                                            (t '("--stdio"))))
   :config
   (puthash
    'typescript
@@ -401,7 +414,6 @@
   )
 
 (use-package lsp-volar
-  :if (eq system-type 'darwin)
   :after (lsp-mode lsp-javascript)
   :custom
   (lsp-volar-hybrid-mode t)
@@ -414,8 +426,13 @@
    )
   (puthash 'volar-language-server
            `(,`(:system
-                ,(concat user-home-directory
-                         "Software/vuejs/language-tools/packages/language-server/bin/vue-language-server.js")))
+                ,(cond ((eq system-type 'gnu/linux)
+                        "apptainer")
+                       ((eq system-type 'darwin)
+                        (concat user-home-directory
+                                "Software/vuejs/language-tools/packages/language-server/bin/vue-language-server.js")
+                        )
+                       )))
            lsp--dependencies)
   (require 'lsp-mode)
   (let ((client (copy-lsp--client (gethash 'vue-semantic-server lsp-clients))))
@@ -424,7 +441,15 @@
               :language-id (lsp--client-language-id client)
               ;; add-on? は t にする
               :add-on? t
-              :new-connection (lsp--client-new-connection client)
+              :new-connection (cond ((eq system-type 'gnu/linux)
+                                     (lsp-stdio-connection
+                                      (lambda ()
+                                        `(,(lsp-package-path 'volar-language-server)
+                                          "run"
+                                          ,(concat user-home-directory
+                                                   "dotfiles/images/vue_language_server.sif"))))
+                                     )
+                                    (t (lsp--client-new-connection client)))
               :ignore-regexps (lsp--client-ignore-regexps client)
               :ignore-messages (lsp--client-ignore-messages client)
               :notification-handlers (lsp--client-notification-handlers client)
@@ -463,14 +488,26 @@
   )
 
 (use-package lsp-eslint
-  :if (eq system-type 'darwin)
   :after lsp-mode
   :custom
   (lsp-eslint-server-command
-   `("node"
-     ,(concat user-home-directory
-              "Software/vscode-eslint/server/out/eslintServer.js")
-     "--stdio")
+   (cond ((eq system-type 'darwin)
+          `("node"
+            ,(concat user-home-directory
+                     "Software/vscode-eslint/server/out/eslintServer.js")
+            "--stdio")
+          )
+         ((eq system-type 'gnu/linux)
+          `("apptainer"
+            "run"
+            ,(concat user-home-directory
+                     "dotfiles/images/eslint_language_server.sif"))
+          )
+         (t
+          `("node"
+            "~/server/out/eslintServer.js"
+            "--stdio"))
+         )
    )
   :config
   (require 'lsp-mode)
