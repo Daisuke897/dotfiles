@@ -241,7 +241,6 @@
   (defun my-cfn-mode-setup ()
     (flycheck-cfn-setup)
     (when (derived-mode-p 'yaml-mode)
-      (princ "test\n")
       (setq flycheck-local-checkers
             '((lsp . ((next-checkers . (cfn-lint))))))
       )
