@@ -518,6 +518,13 @@
     )
   )
 
+(use-package sqlformat
+  :if (eq system-type 'darwin)
+  :ensure t
+  :custom
+  (sqlformat-command 'sql-formatter)
+  )
+
 ;; Linux の環境下で実行する
 (use-package lsp-julia
   :after lsp-mode
