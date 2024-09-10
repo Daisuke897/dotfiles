@@ -10,6 +10,14 @@ cd /opt
 
 npm install typescript-language-server typescript
 
+# Download and build the vue language server to use the typescript plugin
+git clone https://github.com/vuejs/language-tools.git
+cd language-tools
+git checkout v2.1.6
+
+npx pnpm install && npx pnpm run build
+
+
 %runscript
 
 cd /opt
