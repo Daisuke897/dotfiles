@@ -28,6 +28,7 @@
 (setq-default delete-trailing-lines t)
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 
+;; ホームディレクトリのパスを取得する
 (defvar user-home-directory (file-name-as-directory (getenv "HOME")))
 
 (require 'package)
