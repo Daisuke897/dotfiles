@@ -251,7 +251,6 @@
   )
 
 (use-package lsp-yaml
-  :if (eq system-type 'darwin)
   :after (lsp-mode gv)
   :custom
   (lsp-yaml-validate nil)
@@ -285,6 +284,14 @@
                          "!Split sequence"
                          )
                         )
+  (lsp-yaml-server-command (cond ((eq system-type 'gnu/linux)
+                                  `("apptainer"
+                                    "run"
+                                    ,(concat user-home-directory
+                                             "dotfiles/images/yaml_language_server.sif"))
+                                  )
+                                 (t
+                                  '("yaml-language-server" "--stdio"))))
   :config
   (require 'lsp-mode)
   (let ((client (copy-lsp--client (gethash 'yamlls lsp-clients))))
