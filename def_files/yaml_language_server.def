@@ -23,6 +23,3 @@ node /opt/yaml-language-server/out/server/src/server.js --stdio
 
 %labels
 Author Daisuke Nakahara
-
-%labels
-Author Daisuke Nakahara
