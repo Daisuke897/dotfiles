@@ -1,0 +1,20 @@
+Bootstrap: docker
+From: python:latest
+Stage: Python
+
+%post
+
+apt update && apt upgrade -y
+
+python3 -m venv /opt/cfn-lint
+. /opt/cfn-lint/bin/activate
+python3 -m pip install -U pip setuptools
+python3 -m pip install cfn-lint
+
+%runscript
+
+. /opt/cfn-lint/bin/activate
+cfn-lint $@
+
+%labels
+    Author Daisuke

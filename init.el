@@ -224,18 +224,25 @@
   )
 
 (use-package flycheck-cfn
-  :if (eq system-type 'darwin)
   :ensure t
   :requires flycheck
   :config
   (setf (flycheck-checker-get 'cfn-lint 'command)
-        (append `(,(concat user-home-directory
-                           ".pyenv/shims/cfn-lint"))
+        (append (cond ((eq system-type 'gnu/linux)
+                       `("apptainer"
+                         "run"
+                         ,(concat user-home-directory
+                                  "dotfiles/images/cfn-lint.sif"))
+                       )
+                      ((eq system-type 'darwin)
+                       `(,(concat user-home-directory
+                                  ".pyenv/shims/cfn-lint"))
+                       )
+                      )
                 (cdr (flycheck-checker-get 'cfn-lint 'command))))
   )
 
 (use-package cfn-mode
-  :if (eq system-type 'darwin)
   :ensure t
   :after (flycheck-cfn lsp-mode)
   :init

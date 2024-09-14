@@ -24,25 +24,35 @@ apptainer build \
 
 apptainer build \
           -F \
-	  images/python_pyright.sif \
-	  def_files/python_pyright.def
+	  ./images/python_pyright.sif \
+	  ./def_files/python_pyright.def
 
 apptainer build \
           -F \
-	  images/python_ruff.sif \
-	  def_files/python_ruff.def
+	  ./images/python_ruff.sif \
+	  ./def_files/python_ruff.def
 
 apptainer build \
           -F \
-          images/eslint_language_server.sif \
-          def_files/eslint_language_server.def
+          ./images/eslint_language_server.sif \
+          ./def_files/eslint_language_server.def
 
 apptainer build \
           -F \
-          images/vue_language_server.sif \
-          def_files/vue_language_server.def
+          ./images/vue_language_server.sif \
+          ./def_files/vue_language_server.def
 
 apptainer build \
           -F \
-          images/typescript_language_server.sif \
-          def_files/typescript_language_server.def
+          ./images/typescript_language_server.sif \
+          ./def_files/typescript_language_server.def
+
+apptainer build \
+          -F \
+          ./images/aws-cli.sif \
+          docker://public.ecr.aws/aws-cli/aws-cli
+
+apptainer build \
+          -F \
+          ./images/cfn-lint.sif \
+          ./def_files/cfn_lint.def
