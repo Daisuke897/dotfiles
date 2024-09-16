@@ -718,30 +718,73 @@
     :group 'prettier-vue)
   )
 
-(use-package lsp-ruff-lsp
+(use-package lsp-ruff
   :custom
-  (lsp-ruff-lsp-server-command (cond ((eq system-type 'gnu/linux)
-                                      `("apptainer"
-                                        "exec"
-                                        ,(concat user-home-directory
-                                                 "dotfiles/images/python_ruff.sif")
-                                        "/opt/ruff/bin/ruff-lsp"
-                                        ))
-                                     ((eq system-type 'darwin)
-                                      `(,(concat user-home-directory
-                                                 "Software/ruff_lsp/bin/ruff-lsp")))
-                                      )
-                               )
-  (lsp-ruff-lsp-ruff-path (cond ((eq system-type 'gnu/linux)
-                                 (vector "/opt/ruff/bin/ruff"))
-                                ((eq system-type 'darwin)
-                                 (vector (concat user-home-directory
-                                                 "Software/ruff_lsp/bin/ruff")))
-                                )
-                          )
-  (lsp-ruff-lsp-ruff-args (vector "--config"
-                                  "~/dotfiles/ruff.toml"))
-  (lsp-ruff-lsp-show-notifications "always")
+  (lsp-ruff-server-command (cond ((eq system-type 'gnu/linux)
+                                  `("apptainer"
+                                    "run"
+                                    ,(concat user-home-directory
+                                             "dotfiles/images/python_ruff.sif")
+                                    ))
+                                 ((eq system-type 'darwin)
+                                  `(,(concat user-home-directory
+                                             "Software/ruff_lsp/bin/ruff-lsp")))
+                                 )
+                           )
+  (lsp-ruff-show-notifications "always")
+  :config
+  (let ((client (copy-lsp--client (gethash 'ruff lsp-clients))))
+    (puthash 'ruff
+             (make-lsp--client
+              :language-id (lsp--client-language-id client)
+              ;; add-on? は t にする
+              :add-on? t
+              :new-connection (lsp--client-new-connection client)
+              :ignore-regexps (lsp--client-ignore-regexps client)
+              :ignore-messages (lsp--client-ignore-messages client)
+              :notification-handlers (lsp--client-notification-handlers client)
+              :request-handlers (lsp--client-request-handlers client)
+              :response-handlers (lsp--client-response-handlers client)
+              :prefix-function (lsp--client-prefix-function client)
+              :uri-handlers (lsp--client-uri-handlers client)
+              :action-handlers (lsp--client-action-handlers client)
+              :action-filter (lsp--client-action-filter client)
+              :major-modes (lsp--client-major-modes client)
+              :activation-fn (lsp--client-activation-fn client)
+              ;; priority は -2 にする
+              :priority -2
+              :server-id (lsp--client-server-id client)
+              :multi-root (lsp--client-multi-root client)
+              ;; https://docs.astral.sh/ruff/editors/migration/
+              :initialization-options
+              (list :settings
+                    (list
+                     :configuration "~/dotfiles/ruff.toml"
+                     :configurationPreference "filesystemFirst"
+                     :logLevel lsp-ruff-log-level
+                     :showNotifications lsp-ruff-show-notifications
+                     :organizeImports (lsp-json-bool lsp-ruff-advertize-organize-imports)
+                     :fixAll (lsp-json-bool lsp-ruff-advertize-fix-all)
+                     :importStrategy lsp-ruff-import-strategy))
+              :semantic-tokens-faces-overrides (lsp--client-semantic-tokens-faces-overrides client)
+              :custom-capabilities (lsp--client-custom-capabilities client)
+              :library-folders-fn (lsp--client-library-folders-fn client)
+              :before-file-open-fn (lsp--client-before-file-open-fn client)
+              :initialized-fn (lsp--client-initialized-fn client)
+              :remote? (lsp--client-remote? client)
+              :completion-in-comments? (lsp--client-completion-in-comments? client)
+              :path->uri-fn (lsp--client-path->uri-fn client)
+              :uri->path-fn (lsp--client-uri->path-fn client)
+              :environment-fn (lsp--client-environment-fn client)
+              :after-open-fn (lsp--client-after-open-fn client)
+              :async-request-handlers (lsp--client-async-request-handlers client)
+              :download-server-fn (lsp--client-download-server-fn client)
+              :download-in-progress? (lsp--client-download-in-progress? client)
+              :buffers (lsp--client-buffers client)
+              :synchronize-sections (lsp--client-synchronize-sections client)
+              )
+             lsp-clients)
+    )
   )
 
 (use-package lsp-pyright
