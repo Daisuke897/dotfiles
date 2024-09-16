@@ -6,10 +6,6 @@
 ;; 全てのファイルは読み込み専用で開く
 (add-hook 'find-file-hook (lambda () (setq buffer-read-only t)))
 
-(setq-default inhibit-startup-screen t)
-(setq-default indent-tabs-mode nil)
-(setq-default show-trailing-whitespace t)
-
 (setq read-process-output-max (* 1024 1024)) ;; 1mb
 (setq gc-cons-threshold 100000000)
 
@@ -873,9 +869,13 @@
  '(menu-bar-mode nil)
  '(org-agenda-files nil)
  '(package-selected-packages
-   '(reformatter lsp-cfn cfn-mode vue-mode js2-mode typescript-mode yaml-mode docker dockerfile-mode python-mode ivy-bibtex org-ref rust-mode lsp-ivy counsel lsp-ui company flycheck lsp-julia lsp-mode pyvenv use-package yasnippet cmake-mode magit julia-mode))
+   '(cfn-mode company counsel flycheck flycheck-cfn ivy-bibtex js2-mode julia-mode lsp-cfn lsp-ivy lsp-julia lsp-mode lsp-pyright lsp-ui magit org-ref python-mode pyvenv reformatter rust-mode simple-httpd sqlformat symbol-overlay typescript-mode use-package web-mode yaml-mode yasnippet))
  '(scroll-bar-mode nil)
- '(tool-bar-mode nil))
+ '(tool-bar-mode nil)
+ '(inhibit-startup-screen t)
+ '(indent-tabs-mode nil)
+ '(show-trailing-whitespace t)
+ )
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
