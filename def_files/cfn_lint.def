@@ -13,8 +13,7 @@ python3 -m pip install cfn-lint
 
 %runscript
 
-. /opt/cfn-lint/bin/activate
-cfn-lint $@
+/opt/cfn-lint/bin/cfn-lint $@
 
 %labels
     Author Daisuke

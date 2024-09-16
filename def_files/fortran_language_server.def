@@ -14,8 +14,7 @@ python3 -m pip install fortls
 
 %runscript
 
-. /opt/fortls/bin/activate
-fortls --lowercase_intrinsics
+/opt/fortls/bin/fortls --lowercase_intrinsics
 
 %labels
     Author Daisuke
