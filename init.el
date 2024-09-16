@@ -180,6 +180,7 @@
   )
 
 (use-package lsp-mode
+  :commands lsp
   :ensure t
   :hook
   (f90-mode . lsp)
@@ -189,6 +190,23 @@
   (python-mode . lsp)
   :config
   (push 'semgrep-ls lsp-disabled-clients)
+  )
+(with-eval-after-load 'lsp
+  ;; https://github.com/emacs-lsp/lsp-mode/issues/2681
+  (if (version< emacs-version "29.0")
+      (progn
+        (advice-add 'json-parse-buffer :around
+                    (lambda (orig &rest rest)
+                      (while (re-search-forward "\\u0000" nil t)
+                        (replace-match ""))
+                      (apply orig rest)))
+        (advice-add 'json-parse-buffer :around
+                    (lambda (orig &rest rest)
+                      (save-excursion
+                        (while (re-search-forward "\\\\u0000" nil t)
+                          (replace-match "")))
+                      (apply orig rest)))
+        ))
   )
 
 ;; macos の環境下で実行する
