@@ -380,6 +380,9 @@
                                                         "dotfiles/images/typescript_language_server.sif"))
                                              )
                                             (t '("--stdio"))))
+  ;; ts-lsのformatを無効にする
+  (lsp-javascript-format-enable nil)
+  (lsp-typescript-format-enable nil)
   :config
   (puthash
    'typescript
@@ -489,7 +492,25 @@
               :custom-capabilities (lsp--client-custom-capabilities client)
               :library-folders-fn (lsp--client-library-folders-fn client)
               :before-file-open-fn (lsp--client-before-file-open-fn client)
-              :initialized-fn (lsp--client-initialized-fn client)
+              :initialized-fn (lambda (workspace)
+                                (with-lsp-workspace workspace
+                                  (lsp--server-register-capability
+                                   (lsp-make-registration
+                                    :id "random-id"
+                                    :method "workspace/didChangeWatchedFiles"
+                                    :register-options? (lsp-make-did-change-watched-files-registration-options
+                                                        :watchers
+                                                        `[,(lsp-make-file-system-watcher :glob-pattern "**/*.js")
+                                                          ,(lsp-make-file-system-watcher :glob-pattern "**/*.ts")
+                                                          ,(lsp-make-file-system-watcher :glob-pattern "**/*.vue")
+                                                          ,(lsp-make-file-system-watcher :glob-pattern "**/*.jsx")
+                                                          ,(lsp-make-file-system-watcher :glob-pattern "**/*.tsx")
+                                                          ,(lsp-make-file-system-watcher :glob-pattern "**/*.json")]))))
+                                (let ((caps (lsp--workspace-server-capabilities workspace)))
+                                  ;; volarによるformatterを無効にする
+                                  (lsp:set-server-capabilities-document-formatting-provider? caps nil)
+                                  (lsp:set-server-capabilities-document-range-formatting-provider? caps nil))
+                                )
               :remote? (lsp--client-remote? client)
               :completion-in-comments? (lsp--client-completion-in-comments? client)
               :path->uri-fn (lsp--client-path->uri-fn client)
@@ -528,6 +549,8 @@
             "--stdio"))
          )
    )
+  ;; eslintのformatを無効にする
+  (lsp-eslint-format nil)
   :config
   (require 'lsp-mode)
   (let ((client (copy-lsp--client (gethash 'eslint lsp-clients))))
