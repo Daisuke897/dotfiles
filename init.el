@@ -7,18 +7,11 @@
 (add-hook 'find-file-hook (lambda () (setq buffer-read-only t)))
 
 (setq read-process-output-max (* 1024 1024)) ;; 1mb
-(setq gc-cons-threshold 100000000)
 
 ;; デフォルトのフォントサイズを設定
 (when (eq system-type 'darwin)
   (set-face-attribute 'default nil :height 160)
   )
-
-;; バックアップファイルを作成しない
-(setq make-backup-files nil)
-
-;; 改行を末尾に挿入する
-(setq require-final-newline t)
 
 ;; 最終行以降の新しい行をトリミングする
 (setq-default delete-trailing-lines t)
@@ -115,7 +108,6 @@
                 (prettier-vue-on-save-mode))))
   )
 
-
 (use-package typescript-mode
   :ensure t
   :mode "\\.ts\\'")
@@ -190,8 +182,6 @@
   (python-mode . lsp)
   :config
   (push 'semgrep-ls lsp-disabled-clients)
-  )
-(with-eval-after-load 'lsp
   ;; https://github.com/emacs-lsp/lsp-mode/issues/2681
   (if (version< emacs-version "29.0")
       (progn
@@ -936,6 +926,12 @@
  '(inhibit-startup-screen t)
  '(indent-tabs-mode nil)
  '(show-trailing-whitespace t)
+ ;; バックアップファイルを作成しない
+ '(make-backup-files nil)
+ ;; 改行を末尾に挿入する
+ '(require-final-newline t)
+
+ '(gc-cons-threshold 100000000)
  )
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
