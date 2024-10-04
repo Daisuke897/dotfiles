@@ -759,7 +759,8 @@
                                     ))
                                  ((eq system-type 'darwin)
                                   `(,(concat user-home-directory
-                                             "Software/ruff_lsp/bin/ruff-lsp")))
+                                             "Software/ruff_lsp/bin/ruff")
+                                    "server"))
                                  )
                            )
   (lsp-ruff-show-notifications "always")
