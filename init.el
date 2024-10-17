@@ -202,30 +202,30 @@
 ;; macos の環境下で実行する
 
 ;; Github Copilot
-(use-package copilot
-  :if (eq system-type 'darwin)
-  :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
-  :ensure t
-  :hook
-  (prog-mode . copilot-mode)
-  :bind (:map copilot-completion-map
-              ("<tab>" . 'copilot-accept-completion)
-              ("TAB" . 'copilot-accept-completion)
-              ("C-TAB" . 'copilot-accept-completion-by-word)
-              ("C-<tab>" . 'copilot-accept-completion-by-word))
-  :config
-  (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2))
-  (add-to-list 'copilot-indentation-alist '(lisp-interaction-mode 2))
-  )
+;; (use-package copilot
+;;   :if (eq system-type 'darwin)
+;;   :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
+;;   :ensure t
+;;   :hook
+;;   (prog-mode . copilot-mode)
+;;   :bind (:map copilot-completion-map
+;;               ("<tab>" . 'copilot-accept-completion)
+;;               ("TAB" . 'copilot-accept-completion)
+;;               ("C-TAB" . 'copilot-accept-completion-by-word)
+;;               ("C-<tab>" . 'copilot-accept-completion-by-word))
+;;   :config
+;;   (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2))
+;;   (add-to-list 'copilot-indentation-alist '(lisp-interaction-mode 2))
+;;   )
 
 ;; Github Copilot Chat
-(use-package copilot-chat
-  :if (eq system-type 'darwin)
-  :straight (:host github :repo "chep/copilot-chat.el" :files ("*.el"))
-  :after (request)
-  :custom
-  (copilot-chat-frontend 'org)
-  )
+;; (use-package copilot-chat
+;;   :if (eq system-type 'darwin)
+;;   :straight (:host github :repo "chep/copilot-chat.el" :files ("*.el"))
+;;   :after (request)
+;;   :custom
+;;   (copilot-chat-frontend 'org)
+;;   )
 
 (use-package flycheck-cfn
   :ensure t
@@ -823,18 +823,8 @@
   :ensure t
   :custom
   (lsp-pyright-diagnostic-mode  "workspace")
-  (lsp-pyright-typechecking-mode "strict")
   (lsp-pyright-python-executable-cmd "python3")
   (lsp-pyright-auto-import-completions nil)
-  (lsp-pyright-use-library-code-for-types t)
-  (lsp-pyright-stub-path (cond ((eq system-type 'gnu/linux)
-                                (concat user-home-directory "/opt/python-type-stubs/stubs")
-                                )
-                               ((eq system-type 'darwin)
-                                (concat user-home-directory "Software/python-type-stubs/stubs")
-                                )
-                               )
-                         )
   :config
   (let ((client (copy-lsp--client (gethash 'pyright lsp-clients))))
     (puthash 'pyright
