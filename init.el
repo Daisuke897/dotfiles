@@ -791,13 +791,14 @@
               :initialization-options
               (list :settings
                     (list
-                     :configuration "~/dotfiles/ruff.toml"
-                     :configurationPreference "filesystemFirst"
+                     :configurationPreference "editorFirst"
                      :logLevel lsp-ruff-log-level
                      :showNotifications lsp-ruff-show-notifications
                      :organizeImports (lsp-json-bool lsp-ruff-advertize-organize-imports)
                      :fixAll (lsp-json-bool lsp-ruff-advertize-fix-all)
-                     :importStrategy lsp-ruff-import-strategy))
+                     :importStrategy lsp-ruff-import-strategy
+                     :lint `(:ignore ,(vector "ANN401" "BLE" "D" "E501" "EM" "PD002" "PD901" "PLC01" "PLR09" "PLR2004" "PTH123" "TCH") :select ,(vector "ALL"))
+                     :lineLength 320))
               :semantic-tokens-faces-overrides (lsp--client-semantic-tokens-faces-overrides client)
               :custom-capabilities (lsp--client-custom-capabilities client)
               :library-folders-fn (lsp--client-library-folders-fn client)
@@ -821,10 +822,12 @@
 
 (use-package lsp-pyright
   :ensure t
+  :after lsp-mode
   :custom
   (lsp-pyright-diagnostic-mode  "workspace")
   (lsp-pyright-python-executable-cmd "python3")
   (lsp-pyright-auto-import-completions nil)
+  (lsp-pyright-type-checking-mode "strict")
   :config
   (let ((client (copy-lsp--client (gethash 'pyright lsp-clients))))
     (puthash 'pyright
@@ -886,6 +889,9 @@
               )
              lsp-clients)
     )
+  (lsp-register-custom-settings
+   `(("python.analysis.diagnosticSeverityOverrides"
+      "{\"reportAbstractUsage\": \"information\",\"reportArgumentType\": \"information\",\"reportAssertTypeFailure\": \"information\",\"reportAssignmentType\": \"information\",\"reportAttributeAccessIssue\": \"information\",\"reportCallIssue\": \"information\",\"reportInconsistentOverload\": \"information\",\"reportIndexIssue\": \"information\",\"reportInvalidTypeArguments\": \"information\",\"reportInvalidTypeForm\": \"information\",\"reportInvalidTypeVarUse\": \"information\",\"reportNoOverloadImplementation\": \"information\",\"reportOperatorIssue\": \"information\",\"reportPossiblyUnboundVariable\": \"information\",\"reportRedeclaration\": \"information\",\"reportReturnType\": \"information\",\"reportUnusedExcept\": \"information\",\"reportMissingTypeStubs\": \"none\",\"reportPrivateImportUsage\": \"none\",\"reportPrivateUsage\": \"none\",\"reportUnknownArgumentType\": \"none\",\"reportUnknownLambdaType\": \"none\",\"reportUnknownMemberType\": \"none\",\"reportUnknownParameterType\": \"none\",\"reportUnknownVariableType\": \"none\",\"reportUntypedFunctionDecorator\": \"none\",\"reportUnusedClass\": \"none\",\"reportUnusedImport\": \"none\",\"reportUnusedFunction\": \"none\",\"reportUnusedVariable\": \"none\",\"reportUntypedBaseClass\": \"none\",\"reportUntypedClassDecorator\": \"none\",\"reportUntypedNamedTuple\": \"none\"}")))
   )
 
 (use-package symbol-overlay
