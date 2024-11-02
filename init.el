@@ -187,30 +187,30 @@
 ;; macos の環境下で実行する
 
 ;; Github Copilot
-(use-package copilot
-  :if (eq system-type 'darwin)
-  :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
-  :ensure t
-  :hook
-  (prog-mode . copilot-mode)
-  :bind (:map copilot-completion-map
-              ("<tab>" . 'copilot-accept-completion)
-              ("TAB" . 'copilot-accept-completion)
-              ("C-TAB" . 'copilot-accept-completion-by-word)
-              ("C-<tab>" . 'copilot-accept-completion-by-word))
-  :config
-  (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2))
-  (add-to-list 'copilot-indentation-alist '(lisp-interaction-mode 2))
-  )
+;; (use-package copilot
+;;   :if (eq system-type 'darwin)
+;;   :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
+;;   :ensure t
+;;   :hook
+;;   (prog-mode . copilot-mode)
+;;   :bind (:map copilot-completion-map
+;;               ("<tab>" . 'copilot-accept-completion)
+;;               ("TAB" . 'copilot-accept-completion)
+;;               ("C-TAB" . 'copilot-accept-completion-by-word)
+;;               ("C-<tab>" . 'copilot-accept-completion-by-word))
+;;   :config
+;;   (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2))
+;;   (add-to-list 'copilot-indentation-alist '(lisp-interaction-mode 2))
+;;   )
 
 ;; Github Copilot Chat
-(use-package copilot-chat
-  :if (eq system-type 'darwin)
-  :straight (:host github :repo "chep/copilot-chat.el" :files ("*.el"))
-  :after (request)
-  :custom
-  (copilot-chat-frontend 'org)
-  )
+;; (use-package copilot-chat
+;;   :if (eq system-type 'darwin)
+;;   :straight (:host github :repo "chep/copilot-chat.el" :files ("*.el"))
+;;   :after (request)
+;;   :custom
+;;   (copilot-chat-frontend 'org)
+;;   )
 
 (use-package flycheck-cfn
   :ensure t
@@ -744,7 +744,8 @@
                                     ))
                                  ((eq system-type 'darwin)
                                   `(,(concat user-home-directory
-                                             "Software/ruff_lsp/bin/ruff-lsp")))
+                                             "Software/ruff_lsp/bin/ruff")
+                                    "server"))
                                  )
                            )
   (lsp-ruff-show-notifications "always")
@@ -775,13 +776,14 @@
               :initialization-options
               (list :settings
                     (list
-                     :configuration "~/dotfiles/ruff.toml"
-                     :configurationPreference "filesystemFirst"
+                     :configurationPreference "editorFirst"
                      :logLevel lsp-ruff-log-level
                      :showNotifications lsp-ruff-show-notifications
                      :organizeImports (lsp-json-bool lsp-ruff-advertize-organize-imports)
                      :fixAll (lsp-json-bool lsp-ruff-advertize-fix-all)
-                     :importStrategy lsp-ruff-import-strategy))
+                     :importStrategy lsp-ruff-import-strategy
+                     :lint `(:ignore ,(vector "ANN401" "BLE" "D" "E501" "EM" "PD002" "PD901" "PLC01" "PLR09" "PLR2004" "PTH123" "TCH") :select ,(vector "ALL"))
+                     :lineLength 320))
               :semantic-tokens-faces-overrides (lsp--client-semantic-tokens-faces-overrides client)
               :custom-capabilities (lsp--client-custom-capabilities client)
               :library-folders-fn (lsp--client-library-folders-fn client)
@@ -805,20 +807,12 @@
 
 (use-package lsp-pyright
   :ensure t
+  :after lsp-mode
   :custom
   (lsp-pyright-diagnostic-mode  "workspace")
-  (lsp-pyright-typechecking-mode "strict")
   (lsp-pyright-python-executable-cmd "python3")
   (lsp-pyright-auto-import-completions nil)
-  (lsp-pyright-use-library-code-for-types t)
-  (lsp-pyright-stub-path (cond ((eq system-type 'gnu/linux)
-                                (concat user-home-directory "/opt/python-type-stubs/stubs")
-                                )
-                               ((eq system-type 'darwin)
-                                (concat user-home-directory "Software/python-type-stubs/stubs")
-                                )
-                               )
-                         )
+  (lsp-pyright-type-checking-mode "strict")
   :config
   (let ((client (copy-lsp--client (gethash 'pyright lsp-clients))))
     (puthash 'pyright
@@ -880,6 +874,9 @@
               )
              lsp-clients)
     )
+  (lsp-register-custom-settings
+   `(("python.analysis.diagnosticSeverityOverrides"
+      "{\"reportAbstractUsage\": \"information\",\"reportArgumentType\": \"information\",\"reportAssertTypeFailure\": \"information\",\"reportAssignmentType\": \"information\",\"reportAttributeAccessIssue\": \"information\",\"reportCallIssue\": \"information\",\"reportInconsistentOverload\": \"information\",\"reportIndexIssue\": \"information\",\"reportInvalidTypeArguments\": \"information\",\"reportInvalidTypeForm\": \"information\",\"reportInvalidTypeVarUse\": \"information\",\"reportNoOverloadImplementation\": \"information\",\"reportOperatorIssue\": \"information\",\"reportPossiblyUnboundVariable\": \"information\",\"reportRedeclaration\": \"information\",\"reportReturnType\": \"information\",\"reportUnusedExcept\": \"information\",\"reportMissingTypeStubs\": \"none\",\"reportPrivateImportUsage\": \"none\",\"reportPrivateUsage\": \"none\",\"reportUnknownArgumentType\": \"none\",\"reportUnknownLambdaType\": \"none\",\"reportUnknownMemberType\": \"none\",\"reportUnknownParameterType\": \"none\",\"reportUnknownVariableType\": \"none\",\"reportUntypedFunctionDecorator\": \"none\",\"reportUnusedClass\": \"none\",\"reportUnusedImport\": \"none\",\"reportUnusedFunction\": \"none\",\"reportUnusedVariable\": \"none\",\"reportUntypedBaseClass\": \"none\",\"reportUntypedClassDecorator\": \"none\",\"reportUntypedNamedTuple\": \"none\"}")))
   )
 
 (use-package symbol-overlay
