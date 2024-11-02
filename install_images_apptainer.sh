@@ -56,3 +56,8 @@ apptainer build \
           -F \
           ./images/cfn-lint.sif \
           ./def_files/cfn_lint.def
+
+apptainer build \
+          -F \
+          ./images/ffmpeg.sif \
+          ./def_files/ffmpeg.def
