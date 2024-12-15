@@ -4,7 +4,7 @@ Stage: libvorbis-aotuv
 
 %post
 
-  apt update && apt upgrade && apt install git make automake libtool libogg-dev pkg-config -y
+  apt update && apt upgrade -y && apt install git make automake libtool libogg-dev pkg-config -y
 
   cd /opt
 
@@ -26,7 +26,7 @@ Stage: ffmpeg
 
 %post
 
-  apt update && apt upgrade && apt install git make automake libtool libogg-dev pkg-config ninja-build nasm -y
+  apt update && apt upgrade -y && apt install git make automake libtool libogg-dev libmp3lame-dev pkg-config ninja-build nasm -y
 
   cd /opt
 
@@ -38,6 +38,7 @@ Stage: ffmpeg
 
   ./configure --enable-gpl \
     --enable-libvorbis \
+    --enable-libmp3lame \
     --extra-cflags="-march=native" \
     --disable-ffplay \
     --prefix=/opt/ffmpeg \
@@ -68,8 +69,9 @@ Stage: Python
   export PKG_CONFIG_PATH=/opt/libvorbis/lib/pkgconfig:$PKG_CONFIG_PATH
   export LD_LIBRARY_PATH=/opt/libvorbis/lib:$LD_LIBRARY_PATH
 
-  apt update && apt upgrade && apt install libtool libogg-dev shntool flac -y
+  apt update && apt upgrade -y && apt install libtool libogg-dev libmp3lame-dev shntool flac -y
 
+  python3 -m pip install --upgrade pip
   python3 -m pip install ffmpeg-normalize
 
 %labels
