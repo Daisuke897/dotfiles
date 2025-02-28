@@ -909,10 +909,12 @@
 
 (set-language-environment "UTF-8")
 
-(when (eq system-type 'gnu/linux)
-  (require 'mozc)
-  (setq default-input-method "japanese-mozc")
+(use-package mozc
+  :ensure t
+  :if (eq system-type 'gnu/linux)
+  :config
   ;; "sudo apt install emacs-mozc-bin"
+  (setq default-input-method "japanese-mozc")
   )
 
 (setq-default ispell-program-name "aspell")
