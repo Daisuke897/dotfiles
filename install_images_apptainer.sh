@@ -50,7 +50,7 @@ apptainer build \
 apptainer build \
           -F \
           ./images/aws-cli.sif \
-          docker://public.ecr.aws/aws-cli/aws-cli
+          ./def_files/awscli.def
 
 apptainer build \
           -F \
