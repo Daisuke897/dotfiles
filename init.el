@@ -8,9 +8,10 @@
 
 (setq read-process-output-max (* 1024 1024)) ;; 1mb
 
-;; デフォルトのフォントサイズを設定
+;; macosにおけるデフォルトの表示設定
 (when (eq system-type 'darwin)
   (set-face-attribute 'default nil :height 160)
+  (set-frame-parameter nil 'alpha 85)
   )
 
 ;; 最終行以降の新しい行をトリミングする
@@ -183,34 +184,6 @@
   :config
   (push 'semgrep-ls lsp-disabled-clients)
   )
-
-;; macos の環境下で実行する
-
-;; Github Copilot
-;; (use-package copilot
-;;   :if (eq system-type 'darwin)
-;;   :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
-;;   :ensure t
-;;   :hook
-;;   (prog-mode . copilot-mode)
-;;   :bind (:map copilot-completion-map
-;;               ("<tab>" . 'copilot-accept-completion)
-;;               ("TAB" . 'copilot-accept-completion)
-;;               ("C-TAB" . 'copilot-accept-completion-by-word)
-;;               ("C-<tab>" . 'copilot-accept-completion-by-word))
-;;   :config
-;;   (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2))
-;;   (add-to-list 'copilot-indentation-alist '(lisp-interaction-mode 2))
-;;   )
-
-;; Github Copilot Chat
-;; (use-package copilot-chat
-;;   :if (eq system-type 'darwin)
-;;   :straight (:host github :repo "chep/copilot-chat.el" :files ("*.el"))
-;;   :after (request)
-;;   :custom
-;;   (copilot-chat-frontend 'org)
-;;   )
 
 (use-package flycheck-cfn
   :ensure t
@@ -892,6 +865,12 @@
 (use-package org
   :custom
   (org-highlight-latex-and-related '(latex script entities)))
+
+(use-package org-modern
+  :hook
+  (org-mode . org-modern-mode)
+  (org-agenda-finalize . org-modern-agenda)
+  )
 
 ;; active Babel languages
 (org-babel-do-load-languages
