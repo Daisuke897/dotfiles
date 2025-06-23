@@ -866,7 +866,56 @@
   (remhash 'marksman lsp--dependencies)
   (lsp-dependency 'marksman '(:system "apptainer")))
 
+(use-package lsp-json
   :config
+  (remhash 'vscode-json-languageserver lsp--dependencies)
+  (lsp-dependency 'vscode-json-languageserver '(:system "apptainer"))
+  (let ((json-client (copy-lsp--client (gethash 'json-ls lsp-clients))))
+    (when json-client
+      (remhash 'json-ls lsp-clients)
+      (puthash 'json-ls
+               (make-lsp--client
+                :language-id (lsp--client-language-id json-client)
+                :add-on? (lsp--client-add-on? json-client)
+                :new-connection (lsp-stdio-connection (lambda ()
+                                                        `(,(lsp-package-path 'vscode-json-languageserver)
+                                                          "run"
+                                                          ,(concat user-home-directory
+                                                                   "dotfiles/images/json_language_server.sif")
+                                                          "--stdio")))
+                :ignore-regexps (lsp--client-ignore-regexps json-client)
+                :ignore-messages (lsp--client-ignore-messages json-client)
+                :notification-handlers (lsp--client-notification-handlers json-client)
+                :request-handlers (lsp--client-request-handlers json-client)
+                :response-handlers (lsp--client-response-handlers json-client)
+                :prefix-function (lsp--client-prefix-function json-client)
+                :uri-handlers (lsp--client-uri-handlers json-client)
+                :action-handlers (lsp--client-action-handlers json-client)
+                :action-filter (lsp--client-action-filter json-client)
+                :major-modes (lsp--client-major-modes json-client)
+                :activation-fn (lsp--client-activation-fn json-client)
+                :priority (lsp--client-priority json-client)
+                :server-id (lsp--client-server-id json-client)
+                :multi-root (lsp--client-multi-root json-client)
+                :initialization-options (lsp--client-initialization-options json-client)
+                :semantic-tokens-faces-overrides (lsp--client-semantic-tokens-faces-overrides json-client)
+                :custom-capabilities (lsp--client-custom-capabilities json-client)
+                :library-folders-fn (lsp--client-library-folders-fn json-client)
+                :before-file-open-fn (lsp--client-before-file-open-fn json-client)
+                :initialized-fn (lsp--client-initialized-fn json-client)
+                :remote? (lsp--client-remote? json-client)
+                :completion-in-comments? (lsp--client-completion-in-comments? json-client)
+                :path->uri-fn (lsp--client-path->uri-fn json-client)
+                :uri->path-fn (lsp--client-uri->path-fn json-client)
+                :environment-fn (lsp--client-environment-fn json-client)
+                :after-open-fn (lsp--client-after-open-fn json-client)
+                :async-request-handlers (lsp--client-async-request-handlers json-client)
+                :download-server-fn (lsp--client-download-server-fn json-client)
+                :download-in-progress? (lsp--client-download-in-progress? json-client)
+                :buffers (lsp--client-buffers json-client)
+                :synchronize-sections (lsp--client-synchronize-sections json-client)
+                )
+               lsp-clients))))
 
 ;; Org
 (use-package org
