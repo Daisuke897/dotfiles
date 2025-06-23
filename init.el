@@ -556,6 +556,60 @@
                 )
                lsp-clients))))
 
+(use-package lsp-astro
+  :config
+  (lsp-dependency 'typescript
+                  (remove '(:system "tsserver") (gethash 'typescript lsp--dependencies)))
+  (remhash 'astro-language-server lsp--dependencies)
+  (lsp-dependency 'astro-language-server '(:system "apptainer"))
+  (let ((astro-client (copy-lsp--client (gethash 'astro-ls lsp-clients))))
+    (when astro-client
+      (remhash 'astro-ls lsp-clients)
+      (puthash 'astro-ls
+               (make-lsp--client
+                :language-id (lsp--client-language-id astro-client)
+                :add-on? t
+                :new-connection
+                (lsp-stdio-connection (lambda ()
+                                        (list (lsp-package-path 'astro-language-server)
+                                              "run"
+                                              (concat user-home-directory
+                                                      "dotfiles/images/astro_language_server.sif")
+                                              "--stdio")))
+                :ignore-regexps (lsp--client-ignore-regexps astro-client)
+                :ignore-messages (lsp--client-ignore-messages astro-client)
+                :notification-handlers (lsp--client-notification-handlers astro-client)
+                :request-handlers (lsp--client-request-handlers astro-client)
+                :response-handlers (lsp--client-response-handlers astro-client)
+                :prefix-function (lsp--client-prefix-function astro-client)
+                :uri-handlers (lsp--client-uri-handlers astro-client)
+                :action-handlers (lsp--client-action-handlers astro-client)
+                :action-filter (lsp--client-action-filter astro-client)
+                :major-modes (lsp--client-major-modes astro-client)
+                :activation-fn (lsp--client-activation-fn astro-client)
+                :priority 0
+                :server-id (lsp--client-server-id astro-client)
+                :multi-root (lsp--client-multi-root astro-client)
+                :initialization-options (lsp--client-initialization-options astro-client)
+                :semantic-tokens-faces-overrides (lsp--client-semantic-tokens-faces-overrides astro-client)
+                :custom-capabilities (lsp--client-custom-capabilities astro-client)
+                :library-folders-fn (lsp--client-library-folders-fn astro-client)
+                :before-file-open-fn (lsp--client-before-file-open-fn astro-client)
+                :initialized-fn (lsp--client-initialized-fn astro-client)
+                :remote? (lsp--client-remote? astro-client)
+                :completion-in-comments? (lsp--client-completion-in-comments? astro-client)
+                :path->uri-fn (lsp--client-path->uri-fn astro-client)
+                :uri->path-fn (lsp--client-uri->path-fn astro-client)
+                :environment-fn (lsp--client-environment-fn astro-client)
+                :after-open-fn (lsp--client-after-open-fn astro-client)
+                :async-request-handlers (lsp--client-async-request-handlers astro-client)
+                :download-server-fn (lsp--client-download-server-fn astro-client)
+                :download-in-progress? (lsp--client-download-in-progress? astro-client)
+                :buffers (lsp--client-buffers astro-client)
+                :synchronize-sections (lsp--client-synchronize-sections astro-client)
+                )
+               lsp-clients))))
+
 (use-package lsp-julia
   :custom
   (lsp-julia-default-environment "~/.julia/environments/v1.11"))
