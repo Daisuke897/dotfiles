@@ -584,8 +584,6 @@
 
 (column-number-mode 1)
 
-(load-theme 'tango-dark t)
-
 (set-language-environment "UTF-8")
 
 (use-package mozc
