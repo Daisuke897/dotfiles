@@ -445,11 +445,24 @@
                lsp-clients))))
 
 (use-package lsp-eslint
+  :preface
+  (defun my/lsp-eslint-activate-p (filename &optional _)
+    (when lsp-eslint-enable
+      (or (string-match-p (rx (one-or-more anything) "."
+                              (or "ts" "js" "jsx" "tsx" "html" "vue" "svelte" "astro")eos)
+                          filename)
+          (and (derived-mode-p 'js-mode 'js2-mode 'typescript-mode 'typescript-ts-mode 'html-mode 'svelte-mode)
+               (not (string-match-p "\\.json\\'" filename))))))
   :custom
+  (lsp-eslint-server-command `("apptainer"
+                               "run"
+                               ,(concat user-home-directory
+                                        "dotfiles/images/eslint_language_server.sif")
+                               "--stdio"))
   ;; eslintのformatを無効にする
   (lsp-eslint-format nil)
   :config
-  (let ((eslint-client (gethash 'eslint lsp-clients)))
+  (let ((eslint-client (copy-lsp--client (gethash 'eslint lsp-clients))))
     (when eslint-client
       (remhash 'eslint lsp-clients)
       (puthash 'eslint
@@ -467,7 +480,7 @@
                 :action-handlers (lsp--client-action-handlers eslint-client)
                 :action-filter (lsp--client-action-filter eslint-client)
                 :major-modes (lsp--client-major-modes eslint-client)
-                :activation-fn (lsp--client-activation-fn eslint-client)
+                :activation-fn #'my/lsp-eslint-activate-p
                 :priority 0
                 :server-id (lsp--client-server-id eslint-client)
                 :multi-root (lsp--client-multi-root eslint-client)
