@@ -663,6 +663,58 @@
                 )
                lsp-clients))))
 
+(use-package lsp-tex
+  :preface
+  (defun my-lsp-clients-texlab-args ()
+    `(,lsp-clients-texlab-executable
+      "run"
+      ,(concat user-home-directory
+               "dotfiles/images/latex_language_server.sif")))
+  :custom
+  (lsp-clients-texlab-executable "apptainer")
+  :config
+  (let ((texlab-client (gethash 'texlab lsp-clients)))
+    (when texlab-client
+      (remhash 'texlab lsp-clients)
+      (puthash 'texlab
+               (make-lsp--client
+                :language-id (lsp--client-language-id texlab-client)
+                :add-on? (lsp--client-add-on? texlab-client)
+                :new-connection (lsp-stdio-connection (my-lsp-clients-texlab-args))
+                :ignore-regexps (lsp--client-ignore-regexps texlab-client)
+                :ignore-messages (lsp--client-ignore-messages texlab-client)
+                :notification-handlers (lsp--client-notification-handlers texlab-client)
+                :request-handlers (lsp--client-request-handlers texlab-client)
+                :response-handlers (lsp--client-response-handlers texlab-client)
+                :prefix-function (lsp--client-prefix-function texlab-client)
+                :uri-handlers (lsp--client-uri-handlers texlab-client)
+                :action-handlers (lsp--client-action-handlers texlab-client)
+                :action-filter (lsp--client-action-filter texlab-client)
+                :major-modes (lsp--client-major-modes texlab-client)
+                :activation-fn (lsp--client-activation-fn texlab-client)
+                :priority (lsp--client-priority texlab-client)
+                :server-id (lsp--client-server-id texlab-client)
+                :multi-root (lsp--client-multi-root texlab-client)
+                :initialization-options (lsp--client-initialization-options texlab-client)
+                :semantic-tokens-faces-overrides (lsp--client-semantic-tokens-faces-overrides texlab-client)
+                :custom-capabilities (lsp--client-custom-capabilities texlab-client)
+                :library-folders-fn (lsp--client-library-folders-fn texlab-client)
+                :before-file-open-fn (lsp--client-before-file-open-fn texlab-client)
+                :initialized-fn (lsp--client-initialized-fn texlab-client)
+                :remote? (lsp--client-remote? texlab-client)
+                :completion-in-comments? (lsp--client-completion-in-comments? texlab-client)
+                :path->uri-fn (lsp--client-path->uri-fn texlab-client)
+                :uri->path-fn (lsp--client-uri->path-fn texlab-client)
+                :environment-fn (lsp--client-environment-fn texlab-client)
+                :after-open-fn (lsp--client-after-open-fn texlab-client)
+                :async-request-handlers (lsp--client-async-request-handlers texlab-client)
+                :download-server-fn (lsp--client-download-server-fn texlab-client)
+                :download-in-progress? (lsp--client-download-in-progress? texlab-client)
+                :buffers (lsp--client-buffers texlab-client)
+                :synchronize-sections (lsp--client-synchronize-sections texlab-client)
+                )
+               lsp-clients))))
+
 
 (use-package lsp-fortran
   :init
