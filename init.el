@@ -602,22 +602,24 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(custom-enabled-themes '(modus-operandi-tinted))
+ '(gc-cons-threshold 100000000)
+ '(indent-tabs-mode nil)
+ '(inhibit-startup-screen t)
+ '(make-backup-files nil)
  '(menu-bar-mode nil)
  '(org-agenda-files nil)
  '(package-selected-packages
-   '(cfn-mode company counsel flycheck flycheck-cfn ivy-bibtex js2-mode julia-mode lsp-cfn lsp-ivy lsp-julia lsp-mode lsp-pyright lsp-ui magit org-ref python-mode pyvenv reformatter rust-mode simple-httpd sqlformat symbol-overlay typescript-mode use-package web-mode yaml-mode yasnippet))
- '(scroll-bar-mode nil)
- '(tool-bar-mode nil)
- '(inhibit-startup-screen t)
- '(indent-tabs-mode nil)
- '(show-trailing-whitespace t)
- ;; バックアップファイルを作成しない
- '(make-backup-files nil)
- ;; 改行を末尾に挿入する
+   '(cfn-mode company counsel flycheck flycheck-cfn ivy-bibtex js2-mode
+              julia-mode lsp-cfn lsp-ivy lsp-julia lsp-mode
+              lsp-pyright lsp-ui magit org-ref python-mode pyvenv
+              reformatter rust-mode simple-httpd sqlformat
+              symbol-overlay typescript-mode use-package web-mode
+              yaml-mode yasnippet org-modern mozc markdown-ts-mode julia-ts-mode))
  '(require-final-newline t)
-
- '(gc-cons-threshold 100000000)
- )
+ '(scroll-bar-mode nil)
+ '(show-trailing-whitespace t)
+ '(tool-bar-mode nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
