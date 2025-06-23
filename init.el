@@ -727,8 +727,12 @@
   (lsp-dependency 'rust-analyzer '(:system "apptainer")))
 
 (use-package lsp-fortran
-  :init
-  (setq lsp-clients-fortls-args '("--lowercase_intrinsics")))
+  :custom
+  (lsp-clients-fortls-executable "apptainer")
+  (lsp-clients-fortls-args `("run"
+                             ,(concat user-home-directory
+                                      "dotfiles/images/fortran_language_server.sif")
+                             "--lowercase_intrinsics")))
 
 (use-package lsp-ruff
   :custom
