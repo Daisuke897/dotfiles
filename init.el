@@ -316,12 +316,13 @@
                lsp-clients))))
 
 (use-package lsp-javascript
-  :requires lsp-mode
   :preface
   ;; Enable the js-ts LSP server when opening Vue.js files.
   (defun my/lsp-typescript-javascript-tsx-jsx-activate-p (filename &optional _)
     "Check if the js-ts lsp server should be enabled based on FILENAME."
-    (or (string-match-p "\\.[cm]js\\|\\.[jt]sx?\\|\\.vue\\'" filename)
+    (or (string-match-p
+         "\\(?:\\.cjs\\|\\.mjs\\|\\.js\\|\\.jsx\\|\\.ts\\|\\.tsx\\|\\.vue\\|\\.astro\\)\\'"
+         filename)
         (and (derived-mode-p 'js-mode 'js-ts-mode 'typescript-mode 'typescript-ts-mode)
              (not (derived-mode-p 'json-mode)))))
   :custom
@@ -329,11 +330,21 @@
   (lsp-clients-typescript-plugins
    (vector (list :name "@vue/typescript-plugin"
                  :location "/usr/local/lib/node_modules/@vue/typescript-plugin"
-                 :languages (vector "typescript" "javascript" "vue"))))
+                 :languages (vector "typescript" "javascript" "vue"))
+           (list :name "@astrojs/ts-plugin"
+                 :location "/usr/local/lib/node_modules/@astrojs/ts-plugin"
+                 :languages (vector "typescript" "javascript" "astro"))))
+  (lsp-clients-typescript-tls-path "apptainer")
+  (lsp-clients-typescript-server-args `("run"
+                                        ,(concat user-home-directory
+                                                 "dotfiles/images/typescript_language_server.sif")
+                                        "--stdio"))
   ;; Disable format for ts-ls.
   (lsp-javascript-format-enable nil)
   (lsp-typescript-format-enable nil)
   :config
+  (lsp-dependency 'typescript
+                  (remove '(:system "tsserver") (gethash 'typescript lsp--dependencies)))
   (let ((js-client (copy-lsp--client (gethash 'ts-ls lsp-clients))))
     (when js-client
       (remhash 'ts-ls lsp-clients)
