@@ -736,7 +736,69 @@
 
 (use-package lsp-ruff
   :custom
-  (lsp-ruff-show-notifications "always"))
+  (lsp-ruff-server-command `("apptainer"
+                             "run"
+                             ,(concat user-home-directory
+                                      "dotfiles/images/python_ruff.sif")
+                             "server"))
+  (lsp-ruff-show-notifications "always")
+  :config
+  (let ((ruff-client (copy-lsp--client (gethash 'ruff lsp-clients))))
+    (when ruff-client
+      (remhash 'ruff lsp-clients)
+      (puthash 'ruff
+               (make-lsp--client
+                :language-id (lsp--client-language-id ruff-client)
+                :add-on? t
+                :new-connection (lsp--client-new-connection ruff-client)
+                :ignore-regexps (lsp--client-ignore-regexps ruff-client)
+                :ignore-messages (lsp--client-ignore-messages ruff-client)
+                :notification-handlers (lsp--client-notification-handlers ruff-client)
+                :request-handlers (lsp--client-request-handlers ruff-client)
+                :response-handlers (lsp--client-response-handlers ruff-client)
+                :prefix-function (lsp--client-prefix-function ruff-client)
+                :uri-handlers (lsp--client-uri-handlers ruff-client)
+                :action-handlers (lsp--client-action-handlers ruff-client)
+                :action-filter (lsp--client-action-filter ruff-client)
+                :major-modes (lsp--client-major-modes ruff-client)
+                :activation-fn (lsp--client-activation-fn ruff-client)
+                :priority -2
+                :server-id (lsp--client-server-id ruff-client)
+                :multi-root (lsp--client-multi-root ruff-client)
+                ;; https://docs.astral.sh/ruff/editors/migration/
+                :initialization-options
+                (list :settings
+                      (list
+                       :configuration (concat user-home-directory "dotfiles/ruff.toml")
+                       :configurationPreference "filesystemFirst"
+                       :logLevel lsp-ruff-log-level
+                       :showNotifications lsp-ruff-show-notifications
+                       :organizeImports (lsp-json-bool lsp-ruff-advertize-organize-imports)
+                       :fixAll (lsp-json-bool lsp-ruff-advertize-fix-all)
+                       :importStrategy lsp-ruff-import-strategy
+                       :lint `(:ignore ,(vector "ANN401" "BLE" "D" "E501" "EM" "PD002" "PD901" "PLC01" "PLR09" "PLR2004" "PTH123" "TCH")
+                                       :select ,(vector "ALL"))
+                       :lineLength 320
+                       :format (list
+                                :preview (lsp-json-bool t))))
+                :semantic-tokens-faces-overrides (lsp--client-semantic-tokens-faces-overrides ruff-client)
+                :custom-capabilities (lsp--client-custom-capabilities ruff-client)
+                :library-folders-fn (lsp--client-library-folders-fn ruff-client)
+                :before-file-open-fn (lsp--client-before-file-open-fn ruff-client)
+                :initialized-fn (lsp--client-initialized-fn ruff-client)
+                :remote? (lsp--client-remote? ruff-client)
+                :completion-in-comments? (lsp--client-completion-in-comments? ruff-client)
+                :path->uri-fn (lsp--client-path->uri-fn ruff-client)
+                :uri->path-fn (lsp--client-uri->path-fn ruff-client)
+                :environment-fn (lsp--client-environment-fn ruff-client)
+                :after-open-fn (lsp--client-after-open-fn ruff-client)
+                :async-request-handlers (lsp--client-async-request-handlers ruff-client)
+                :download-server-fn (lsp--client-download-server-fn ruff-client)
+                :download-in-progress? (lsp--client-download-in-progress? ruff-client)
+                :buffers (lsp--client-buffers ruff-client)
+                :synchronize-sections (lsp--client-synchronize-sections ruff-client)
+                )
+               lsp-clients))))
 
 (use-package lsp-pyright
   :ensure t
