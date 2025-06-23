@@ -392,14 +392,24 @@
   (lsp-volar-hybrid-mode t)
   (lsp-volar-take-over-mode nil)
   :config
-  (let ((vue-client (gethash 'vue-semantic-server lsp-clients)))
+  (lsp-dependency 'typescript
+                  (remove '(:system "tsserver") (gethash 'typescript lsp--dependencies)))
+  (remhash 'volar-language-server lsp--dependencies)
+  (lsp-dependency 'volar-language-server '(:system "apptainer"))
+  (let ((vue-client (copy-lsp--client (gethash 'vue-semantic-server lsp-clients))))
     (when vue-client
       (remhash 'vue-semantic-server lsp-clients)
       (puthash 'vue-semantic-server
                (make-lsp--client
                 :language-id (lsp--client-language-id vue-client)
                 :add-on? t
-                :new-connection (lsp--client-new-connection vue-client)
+                :new-connection
+                (lsp-stdio-connection (lambda ()
+                                        `(,(lsp-package-path 'volar-language-server)
+                                          "run"
+                                          ,(concat user-home-directory
+                                                   "dotfiles/images/vue_language_server.sif")
+                                          "--stdio")))
                 :ignore-regexps (lsp--client-ignore-regexps vue-client)
                 :ignore-messages (lsp--client-ignore-messages vue-client)
                 :notification-handlers (lsp--client-notification-handlers vue-client)
@@ -410,7 +420,7 @@
                 :action-handlers (lsp--client-action-handlers vue-client)
                 :action-filter (lsp--client-action-filter vue-client)
                 :major-modes (lsp--client-major-modes vue-client)
-                :activation-fn (lsp--client-major-modes vue-client)
+                :activation-fn (lsp--client-activation-fn vue-client)
                 :priority 0
                 :server-id (lsp--client-server-id vue-client)
                 :multi-root (lsp--client-multi-root vue-client)
