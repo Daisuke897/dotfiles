@@ -4,16 +4,13 @@ Stage: Python
 
 %post
 
-apt update && apt upgrade -y
-
-python3 -m venv /opt/cfn-lint
-. /opt/cfn-lint/bin/activate
-python3 -m pip install -U pip setuptools
-python3 -m pip install cfn-lint
+    apt-get update && apt-get upgrade -y
+    python3 -m venv /opt/cfn-lint
+    . /opt/cfn-lint/bin/activate
+    pip install --upgrade pip setuptools
+    pip install cfn-lint
 
 %runscript
 
-/opt/cfn-lint/bin/cfn-lint $@
-
-%labels
-    Author Daisuke
+    . /opt/cfn-lint/bin/activate
+    exec cfn-lint $@

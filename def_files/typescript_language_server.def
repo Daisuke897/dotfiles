@@ -4,24 +4,16 @@ Stage: node
 
 %post
 
-apt update && apt upgrade -y && apt install git -y
+    apt-get update && apt-get upgrade -y && apt-get install git -y
 
-cd /opt
+    npm install -g \
+        typescript-language-server \
+        typescript \
+        @vue/typescript-plugin \
+        @astrojs/ts-plugin
 
-npm install typescript-language-server typescript
-
-# Download and build the vue language server to use the typescript plugin
-git clone https://github.com/vuejs/language-tools.git
-cd language-tools
-git checkout v2.1.10
-
-npx pnpm install && npx pnpm run build
-
+%test
+    typescript-language-server --version || exit 1
 
 %runscript
-
-cd /opt
-npx typescript-language-server --stdio
-
-%labels
-Author Daisuke Nakahara
+    exec typescript-language-server "$@"

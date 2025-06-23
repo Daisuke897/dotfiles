@@ -4,24 +4,17 @@ Stage: Julia
 
 %post
 
-apt update
-apt upgrade -y
+    apt-get update && apt-get upgrade -y
 
-export JULIA_DEPOT_PATH="/usr/local/julia/local/share/julia"
+    export JULIA_DEPOT_PATH="/usr/local/julia/local/share/julia"
 
-mkdir -p /opt/julia
+    mkdir -p /opt/julia
 
-julia \
-    --project="/opt/julia" \
-    -e 'using Pkg; Pkg.add("LanguageServer"); Pkg.precompile()'
+    julia \
+        --project="/opt/julia" \
+        -e 'using Pkg; Pkg.add("LanguageServer"); Pkg.precompile()'
 
 
 %runscript
 
-julia \
-    --project="/opt/julia" \
-    -e 'using LanguageServer; runserver()'
-
-
-%labels
-    Author Daisuke
+    exec julia "$@"

@@ -9,4 +9,4 @@ Stage: node
 
 %runscript
 
-    exec vscode-eslint-language-server "$@"
+    exec vscode-css-language-server "$@"

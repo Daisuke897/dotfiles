@@ -7,28 +7,9 @@ export PATH=/opt/texlab_target/release:$PATH
 
 %post
 
-apt update
-apt upgrade -y
-
-apt install git -y
-
-cd /opt
-
-git clone https://github.com/latex-lsp/texlab.git
-
-cd texlab
-
-git checkout v5.21.0
-
-cargo build --release --target-dir=/opt/texlab_target
-
-cd /opt
-
-rm texlab -rf
+    apt-get update && apt-get upgrade -y && apt-get install -y git
+    cargo install --git https://github.com/latex-lsp/texlab --root /opt/texlab
 
 %runscript
 
-texlab
-
-%labels
-Author Daisuke Nakahara
+    exec texlab "$@"

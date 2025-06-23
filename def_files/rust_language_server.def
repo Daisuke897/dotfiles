@@ -1,6 +1,6 @@
 Bootstrap: docker
 From: rust:latest
-Stage: Rust
+Stage: builder
 
 %environment
 export PATH=$CARGO_HOME/bin/:$PATH
@@ -8,32 +8,34 @@ export CARGO_HOME=$HOME/.cargo/
 
 %post
 
-apt update
-apt upgrade -y
+    cd /opt
 
-rustup update
+    apt-get update && apt-get upgrade -y && \
+    apt-get install -y git && \
+    rm -rf /var/lib/apt/lists/*
 
-rustup component add rust-src
+    rustup update && \
+    rustup component add rust-src
 
-cd /opt
+    git clone https://github.com/rust-lang/rust-analyzer.git && \
+    cd rust-analyzer && \
+    git checkout release && \
+    cargo xtask install --server && \
+    cd .. && \
+    rm -rf rust-analyzer && \
+    echo "rust-analyzer installed at:" && which rust-analyzer
 
-git clone https://github.com/rust-lang/rust-analyzer.git
+    strip $(which rust-analyzer) || true
 
-cd rust-analyzer
+Bootstrap: docker
+From: debian:stable-slim
+Stage: final
 
-git checkout release
+%files from builder
+    /usr/local/cargo/bin/rust-analyzer /usr/local/bin/rust-analyzer
 
-cargo xtask install --server
-
-cd ../
-
-rm rust-analyzer -rf
-
-which rust-analyzer
+%test
+    rust-analyzer --version || exit 1
 
 %runscript
-
-rust-analyzer
-
-%labels
-Author Daisuke Nakahara
+    exec rust-analyzer "$@"

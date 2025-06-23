@@ -1,0 +1,9 @@
+Bootstrap: docker
+From: node:24-bookworm-slim
+
+%post
+    apt-get update && apt-get install -y ca-certificates
+    npm install -g vscode-json-languageserver
+
+%runscript
+    exec vscode-json-languageserver "$@"
