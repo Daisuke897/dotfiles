@@ -856,6 +856,15 @@
                 )
                lsp-clients))))
 
+(use-package lsp-marksman
+  :custom
+  (lsp-marksman-server-command "apptainer")
+  (lsp-marksman-server-command-args `("run"
+                                      ,(concat user-home-directory
+                                               "dotfiles/images/marksman_x64.sif")))
+  :config
+  (remhash 'marksman lsp--dependencies)
+  (lsp-dependency 'marksman '(:system "apptainer")))
 
   :config
 
