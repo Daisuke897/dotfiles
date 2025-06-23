@@ -1,6 +1,6 @@
 #!/bin/bash
 
-bash ./install_images_apptainer.sh 
+bash ./install_images_apptainer.sh
 
 # emacs
 dpkg -s emacs-mozc &> /dev/null
