@@ -61,3 +61,23 @@ apptainer build \
           -F \
           ./images/ffmpeg.sif \
           ./def_files/ffmpeg.def
+
+apptainer build \
+          -F \
+          ./images/marksman_x64.sif \
+          ./def_files/marksman_x64.def
+
+apptainer build \
+          -F \
+          ./images/json_language_server.sif \
+          ./def_files/json_language_server.def
+
+apptainer build \
+          -F \
+          ./images/css_language_server.sif \
+          ./def_files/css_language_server.def
+
+apptainer build \
+          -F \
+          ./images/astro_language_server.sif \
+          ./def_files/astro_language_server.def
