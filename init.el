@@ -95,10 +95,17 @@
   ("\\.yaml\\'" . yaml-ts-mode)
   ("\\.yml\\'" . yaml-ts-mode))
 
+(use-package bash-ts-mode
+  :mode
+  ("\\.sh\\'" . bash-ts-mode)
+  :init
+  (add-to-list 'major-mode-remap-alist '(sh-mode . bash-ts-mode)))
+
 (use-package web-mode
   :ensure t
   :mode
   ("\\.vue\\'" . web-mode)
+  ("\\.astro\\'" . web-mode)
   :config
   (setq web-mode-markup-indent-offset 2)
   (setq web-mode-css-indent-offset 2)
@@ -109,7 +116,34 @@
 
 (use-package typescript-ts-mode
   :ensure t
-  :mode "\\.ts\\'")
+  :mode
+  ("\\.ts\\'" . typescript-ts-mode)
+  ("\\.tsx\\'" . tsx-ts-mode))
+
+(use-package markdown-ts-mode
+  :ensure t
+  :mode
+  ("\\.md\\'" . markdown-ts-mode))
+
+(use-package json-ts-mode
+  :mode
+  ("\\.json\\'" . json-ts-mode))
+
+(use-package css-ts-mode
+  :mode
+  ("\\.css\\'" . css-ts-mode))
+
+(use-package go-ts-mode
+  :mode
+  ("\\.go\\'" . go-ts-mode))
+
+(use-package go-mod-ts-mode
+  :mode
+  ("go\\.mod\\'" . go-mod-ts-mode))
+
+(use-package toml-ts-mode
+  :mode
+  ("\\.toml\\'" . toml-ts-mode))
 
 (use-package ivy
   :ensure t
