@@ -715,6 +715,16 @@
                 )
                lsp-clients))))
 
+(use-package lsp-rust
+  :if (eq system-type 'gnu/linux)
+  :custom
+  (lsp-rust-analyzer-server-command
+   `("apptainer" "run" ,(concat user-home-directory
+                                "dotfiles/images/"
+                                "rust_language_server.sif")))
+  :config
+  (remhash 'rust-analyzer lsp--dependencies)
+  (lsp-dependency 'rust-analyzer '(:system "apptainer")))
 
 (use-package lsp-fortran
   :init
