@@ -504,6 +504,58 @@
                 )
                lsp-clients))))
 
+(use-package lsp-css
+  :config
+  (remhash 'css-languageserver lsp--dependencies)
+  (lsp-dependency 'css-languageserver '(:system "apptainer"))
+  (let ((css-client (copy-lsp--client (gethash 'css-ls lsp-clients))))
+    (when css-client
+      (remhash 'css-ls lsp-clients)
+      (puthash 'css-ls
+               (make-lsp--client
+                :language-id (lsp--client-language-id css-client)
+                :add-on? t
+                :new-connection
+                (lsp-stdio-connection (lambda ()
+                                        (list (lsp-package-path 'css-languageserver)
+                                              "run"
+                                              (concat user-home-directory
+                                                      "dotfiles/images/css_language_server.sif")
+                                              "--stdio")))
+                :ignore-regexps (lsp--client-ignore-regexps css-client)
+                :ignore-messages (lsp--client-ignore-messages css-client)
+                :notification-handlers (lsp--client-notification-handlers css-client)
+                :request-handlers (lsp--client-request-handlers css-client)
+                :response-handlers (lsp--client-response-handlers css-client)
+                :prefix-function (lsp--client-prefix-function css-client)
+                :uri-handlers (lsp--client-uri-handlers css-client)
+                :action-handlers (lsp--client-action-handlers css-client)
+                :action-filter (lsp--client-action-filter css-client)
+                :major-modes (lsp--client-major-modes css-client)
+                :activation-fn (lsp--client-activation-fn css-client)
+                :priority 0
+                :server-id (lsp--client-server-id css-client)
+                :multi-root (lsp--client-multi-root css-client)
+                :initialization-options (lsp--client-initialization-options css-client)
+                :semantic-tokens-faces-overrides (lsp--client-semantic-tokens-faces-overrides css-client)
+                :custom-capabilities (lsp--client-custom-capabilities css-client)
+                :library-folders-fn (lsp--client-library-folders-fn css-client)
+                :before-file-open-fn (lsp--client-before-file-open-fn css-client)
+                :initialized-fn (lsp--client-initialized-fn css-client)
+                :remote? (lsp--client-remote? css-client)
+                :completion-in-comments? (lsp--client-completion-in-comments? css-client)
+                :path->uri-fn (lsp--client-path->uri-fn css-client)
+                :uri->path-fn (lsp--client-uri->path-fn css-client)
+                :environment-fn (lsp--client-environment-fn css-client)
+                :after-open-fn (lsp--client-after-open-fn css-client)
+                :async-request-handlers (lsp--client-async-request-handlers css-client)
+                :download-server-fn (lsp--client-download-server-fn css-client)
+                :download-in-progress? (lsp--client-download-in-progress? css-client)
+                :buffers (lsp--client-buffers css-client)
+                :synchronize-sections (lsp--client-synchronize-sections css-client)
+                )
+               lsp-clients))))
+
 (use-package lsp-julia
   :custom
   (lsp-julia-default-environment "~/.julia/environments/v1.11"))
