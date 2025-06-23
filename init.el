@@ -198,9 +198,8 @@
   :preface
   (defun my-cfn-mode-setup ()
     (flycheck-cfn-setup)
-    (when (derived-mode-p 'yaml-ts-mode)
       (setq flycheck-local-checkers
-            '((lsp . ((next-checkers . (cfn-lint))))))))
+            '((lsp . ((next-checkers . (cfn-lint)))))))
   :hook
   (cfn-mode . my-cfn-mode-setup))
 
