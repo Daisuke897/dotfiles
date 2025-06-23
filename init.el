@@ -524,14 +524,7 @@
   (lsp-pyright-auto-import-completions nil)
   (lsp-pyright-type-checking-mode "strict"))
 
-(use-package symbol-overlay
-  :ensure t
   :config
-  (global-set-key (kbd "M-i") 'symbol-overlay-put)
-  (global-set-key (kbd "M-n") 'symbol-overlay-switch-forward)
-  (global-set-key (kbd "M-p") 'symbol-overlay-switch-backward)
-  (global-set-key (kbd "<f7>") 'symbol-overlay-mode)
-  (global-set-key (kbd "<f8>") 'symbol-overlay-remove-all))
 
 ;; Org
 (use-package org
