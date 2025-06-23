@@ -803,10 +803,59 @@
 (use-package lsp-pyright
   :ensure t
   :custom
+  (lsp-pyright-langserver-command-args `("run"
+                                         ,(concat user-home-directory
+                                                  "dotfiles/images/python_pyright.sif")
+                                         "--stdio"))
   (lsp-pyright-diagnostic-mode  "workspace")
   (lsp-pyright-python-executable-cmd "python3")
   (lsp-pyright-auto-import-completions nil)
-  (lsp-pyright-type-checking-mode "strict"))
+  (lsp-pyright-type-checking-mode "strict")
+  :config
+  (remhash 'pyright lsp--dependencies)
+  (lsp-dependency 'pyright '(:system "apptainer"))
+  (let ((pyright-client (copy-lsp--client (gethash 'pyright lsp-clients))))
+    (when pyright-client
+      (remhash 'pyright lsp-clients)
+      (puthash 'pyright
+               (make-lsp--client
+                :language-id (lsp--client-language-id pyright-client)
+                :add-on? t
+                :new-connection (lsp--client-new-connection pyright-client)
+                :ignore-regexps (lsp--client-ignore-regexps pyright-client)
+                :ignore-messages (lsp--client-ignore-messages pyright-client)
+                :notification-handlers (lsp--client-notification-handlers pyright-client)
+                :request-handlers (lsp--client-request-handlers pyright-client)
+                :response-handlers (lsp--client-response-handlers pyright-client)
+                :prefix-function (lsp--client-prefix-function pyright-client)
+                :uri-handlers (lsp--client-uri-handlers pyright-client)
+                :action-handlers (lsp--client-action-handlers pyright-client)
+                :action-filter (lsp--client-action-filter pyright-client)
+                :major-modes (lsp--client-major-modes pyright-client)
+                :activation-fn (lsp--client-activation-fn pyright-client)
+                :priority -2
+                :server-id (lsp--client-server-id pyright-client)
+                :multi-root (lsp--client-multi-root pyright-client)
+                :initialization-options (lsp--client-initialization-options pyright-client)
+                :semantic-tokens-faces-overrides (lsp--client-semantic-tokens-faces-overrides pyright-client)
+                :custom-capabilities (lsp--client-custom-capabilities pyright-client)
+                :library-folders-fn (lsp--client-library-folders-fn pyright-client)
+                :before-file-open-fn (lsp--client-before-file-open-fn pyright-client)
+                :initialized-fn (lsp--client-initialized-fn pyright-client)
+                :remote? (lsp--client-remote? pyright-client)
+                :completion-in-comments? (lsp--client-completion-in-comments? pyright-client)
+                :path->uri-fn (lsp--client-path->uri-fn pyright-client)
+                :uri->path-fn (lsp--client-uri->path-fn pyright-client)
+                :environment-fn (lsp--client-environment-fn pyright-client)
+                :after-open-fn (lsp--client-after-open-fn pyright-client)
+                :async-request-handlers (lsp--client-async-request-handlers pyright-client)
+                :download-server-fn (lsp--client-download-server-fn pyright-client)
+                :download-in-progress? (lsp--client-download-in-progress? pyright-client)
+                :buffers (lsp--client-buffers pyright-client)
+                :synchronize-sections (lsp--client-synchronize-sections pyright-client)
+                )
+               lsp-clients))))
+
 
   :config
 
