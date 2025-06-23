@@ -206,6 +206,20 @@
 ;; Lsp
 (use-package lsp-mode
   :ensure t
+  :after
+  (lsp-yaml
+   lsp-javascript
+   lsp-volar
+   lsp-eslint
+   lsp-julia
+   lsp-tex
+   lsp-fortran
+   lsp-ruff
+   lsp-pyright
+   lsp-marksman
+   lsp-json
+   lsp-css
+   lsp-astro)
   :hook
   (f90-mode . lsp)
   (rust-ts-mode . lsp)
@@ -215,8 +229,13 @@
   (web-mode . lsp)
   (yaml-ts-mode . lsp)
   (typescript-ts-mode . lsp)
+  (markdown-ts-mode . lsp)
+  (json-ts-mode . lsp)
+  (css-ts-mode . lsp)
   :config
-  (push 'semgrep-ls lsp-disabled-clients))
+  (push 'semgrep-ls lsp-disabled-clients)
+  (lsp-dependency 'typescript
+                  (remove '(:system "tsserver") (gethash 'typescript lsp--dependencies))))
 
 (use-package lsp-yaml
   :custom
