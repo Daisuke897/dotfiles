@@ -239,6 +239,11 @@
 
 (use-package lsp-yaml
   :custom
+  (lsp-yaml-server-command `("apptainer"
+                             "run"
+                             ,(concat user-home-directory
+                                      "dotfiles/images/yaml_language_server.sif")
+                             "--stdio"))
   (lsp-yaml-custom-tags (vector
                          "!And"
                          "!If"
