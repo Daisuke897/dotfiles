@@ -612,7 +612,57 @@
 
 (use-package lsp-julia
   :custom
-  (lsp-julia-default-environment "~/.julia/environments/v1.11"))
+  (lsp-julia-default-environment "~/.julia/environments/v1.11")
+  :config
+  (let ((julia-client (gethash 'julia-ls lsp-clients)))
+    (when julia-client
+      (remhash 'julia-ls lsp-clients)
+      (puthash 'julia-ls
+               (make-lsp--client
+                :language-id (lsp--client-language-id julia-client)
+                :add-on? (lsp--client-add-on? julia-client)
+                :new-connection
+                (lsp-stdio-connection (lambda ()
+                                        (append
+                                         `("apptainer"
+                                           "run"
+                                           ,(concat user-home-directory
+                                                    "dotfiles/images/julia_language_server.sif"))
+                                         (cdr (lsp-julia--rls-command)))))
+                :ignore-regexps (lsp--client-ignore-regexps julia-client)
+                :ignore-messages (lsp--client-ignore-messages julia-client)
+                :notification-handlers (lsp--client-notification-handlers julia-client)
+                :request-handlers (lsp--client-request-handlers julia-client)
+                :response-handlers (lsp--client-response-handlers julia-client)
+                :prefix-function (lsp--client-prefix-function julia-client)
+                :uri-handlers (lsp--client-uri-handlers julia-client)
+                :action-handlers (lsp--client-action-handlers julia-client)
+                :action-filter (lsp--client-action-filter julia-client)
+                :major-modes (lsp--client-major-modes julia-client)
+                :activation-fn (lsp--client-activation-fn julia-client)
+                :priority (lsp--client-priority julia-client)
+                :server-id (lsp--client-server-id julia-client)
+                :multi-root (lsp--client-multi-root julia-client)
+                :initialization-options (lsp--client-initialization-options julia-client)
+                :semantic-tokens-faces-overrides (lsp--client-semantic-tokens-faces-overrides julia-client)
+                :custom-capabilities (lsp--client-custom-capabilities julia-client)
+                :library-folders-fn (lsp--client-library-folders-fn julia-client)
+                :before-file-open-fn (lsp--client-before-file-open-fn julia-client)
+                :initialized-fn (lsp--client-initialized-fn julia-client)
+                :remote? (lsp--client-remote? julia-client)
+                :completion-in-comments? (lsp--client-completion-in-comments? julia-client)
+                :path->uri-fn (lsp--client-path->uri-fn julia-client)
+                :uri->path-fn (lsp--client-uri->path-fn julia-client)
+                :environment-fn (lsp--client-environment-fn julia-client)
+                :after-open-fn (lsp--client-after-open-fn julia-client)
+                :async-request-handlers (lsp--client-async-request-handlers julia-client)
+                :download-server-fn (lsp--client-download-server-fn julia-client)
+                :download-in-progress? (lsp--client-download-in-progress? julia-client)
+                :buffers (lsp--client-buffers julia-client)
+                :synchronize-sections (lsp--client-synchronize-sections julia-client)
+                )
+               lsp-clients))))
+
 
 (use-package lsp-fortran
   :init
