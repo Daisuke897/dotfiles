@@ -51,11 +51,20 @@
   :config
   (setq treesit-language-source-alist
         '((python "https://github.com/tree-sitter/tree-sitter-python.git")
-          (julia "https://github.com/tree-sitter/tree-sitter-julia.git")
+          (julia "https://github.com/tree-sitter/tree-sitter-julia.git" "v0.23.1")
           (rust "https://github.com/tree-sitter/tree-sitter-rust.git" "v0.23.3")
           (yaml "https://github.com/ikatyang/tree-sitter-yaml.git")
           (typescript "https://github.com/tree-sitter/tree-sitter-typescript.git" "master" "typescript/src")
-          (vue "https://github.com/ikatyang/tree-sitter-vue.git"))))
+          (tsx "https://github.com/tree-sitter/tree-sitter-typescript.git" "master" "tsx/src")
+          (vue "https://github.com/ikatyang/tree-sitter-vue.git")
+          (markdown "https://github.com/tree-sitter-grammars/tree-sitter-markdown.git" "v0.4.1" "tree-sitter-markdown/src")
+          (markdown-inline "https://github.com/tree-sitter-grammars/tree-sitter-markdown.git" "v0.4.1" "tree-sitter-markdown-inline/src")
+          (json "https://github.com/tree-sitter/tree-sitter-json.git")
+          (css "https://github.com/tree-sitter/tree-sitter-css.git")
+          (go "https://github.com/tree-sitter/tree-sitter-go")
+          (gomod "https://github.com/camdencheek/tree-sitter-go-mod")
+          (bash "https://github.com/tree-sitter/tree-sitter-bash.git" "v0.23.3")
+          (toml "https://github.com/ikatyang/tree-sitter-toml.git"))))
 
 (use-package julia-ts-mode
   :ensure t
