@@ -64,7 +64,8 @@
           (go "https://github.com/tree-sitter/tree-sitter-go")
           (gomod "https://github.com/camdencheek/tree-sitter-go-mod")
           (bash "https://github.com/tree-sitter/tree-sitter-bash.git" "v0.23.3")
-          (toml "https://github.com/ikatyang/tree-sitter-toml.git"))))
+          (toml "https://github.com/ikatyang/tree-sitter-toml.git")
+          (nix "https://github.com/nix-community/tree-sitter-nix.git"))))
 
 (use-package julia-ts-mode
   :ensure t
@@ -144,6 +145,11 @@
 (use-package toml-ts-mode
   :mode
   ("\\.toml\\'" . toml-ts-mode))
+
+(use-package nix-ts-mode
+  :ensure t
+  :mode
+  ("\\.nix\\'" . nix-ts-mode))
 
 (use-package ivy
   :ensure t
