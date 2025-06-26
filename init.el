@@ -945,33 +945,6 @@
   :custom
   (sqlformat-command 'sql-formatter))
 
-(use-package reformatter
-  :ensure t
-  :hook
-  (python-ts-mode . ruff-format-on-save-mode)
-  :config
-  (reformatter-define ruff-format
-    :program "ruff"
-    :args '("format"
-            "--config"
-            "~/dotfiles/ruff.toml"
-            "--stdin-filename"
-            ,buffer-file-name "-")
-    :lighter " RuffFmt"
-    :group 'ruff-format)
-
-  (reformatter-define prettier-vue
-    :program "npx"
-    :args `("prettier" "--log-level" "error" "--no-color" "--parser" "vue")
-    :lighter " PrettierVue"
-    :group 'prettier-vue)
-  ;; Run prettier-vue when in web-mode and the file extension is .vue.
-  (add-hook 'web-mode-hook
-            (lambda ()
-              (when (and (string= (file-name-extension buffer-file-name) "vue")
-                         (string= (file-name-extension (buffer-file-name (buffer-base-buffer))) "vue"))
-                (prettier-vue-on-save-mode)))))
-
 (column-number-mode 1)
 
 (set-language-environment "UTF-8")
