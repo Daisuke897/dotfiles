@@ -45,5 +45,27 @@
       ) systems);
   in
     {
+      homeConfigurations = homeConfigs;
+
+      devShells = builtins.listToAttrs (map (s:
+        let pkgs = import nixpkgs { inherit (s) system; };
+
+        emacsLspDeps = with pkgs; [
+          emacs
+
+          nodejs
+          nodePackages.typescript-language-server
+
+          python3
+          python3Packages.python-lsp-server
+
+          rust-analyzer
+        ];
+
+        in
+          { name = s.system;
+            value = pkgs.mkShell { buildInputs = [ pkgs.emacs ];};
+          }
+      ) systems);
     };
 }
