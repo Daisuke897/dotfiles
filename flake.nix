@@ -68,79 +68,127 @@
 
       devShells = builtins.listToAttrs (map (s:
         let pkgs = import nixpkgs { inherit (s) system; };
+        lspWrappers = {
+          typescript = mkLspWrapper {
+            inherit pkgs;
+            name = "typescript-lsp";
+            npmPackages = [
+              "typescript"
+              "typescript-language-server"
+              "@vue/typescript-plugin"
+              "@astrojs/ts-plugin"
+            ];
+            bin = "typescript-language-server";
+          };
 
-        typescriptLsp = mkLspWrapper {
-          inherit pkgs;
-          name = "typescript-lsp";
-          npmPackages = [
-            "typescript"
-            "typescript-language-server"
-            "@vue/typescript-plugin"
-            "@astrojs/ts-plugin"
-          ];
-          bin = "typescript-language-server";
+          vue = mkLspWrapper {
+            inherit pkgs;
+            name = "vue-lsp";
+            npmPackages = [ "@vue/language-server" ];
+            bin = "vue-language-server";
+          };
+
+          astro = mkLspWrapper {
+            inherit pkgs;
+            name = "astro-lsp";
+            npmPackages = [ "@astrojs/language-server" ];
+            bin = "astro-ls";
+          };
+
+          eslint = mkLspWrapper {
+            inherit pkgs;
+            name = "eslint-lsp";
+            npmPackages = [ "vscode-langservers-extracted" ];
+            bin = "vscode-eslint-language-server";
+          };
+
+          css = mkLspWrapper {
+            inherit pkgs;
+            name = "css-lsp";
+            npmPackages = [ "vscode-langservers-extracted" ];
+            bin = "vscode-css-language-server";
+          };
+
+          html = mkLspWrapper {
+            inherit pkgs;
+            name = "html-lsp";
+            npmPackages = [ "vscode-langservers-extracted" ];
+            bin = "vscode-html-language-server";
+          };
+
+          json = mkLspWrapper {
+            inherit pkgs;
+            name = "json-lsp";
+            npmPackages = [ "vscode-langservers-extracted" ];
+            bin = "vscode-json-language-server";
+          };
         };
 
-        vueLsp = mkLspWrapper {
-          inherit pkgs;
-          name = "vue-lsp";
-          npmPackages = [ "@vue/language-server" ];
-          bin = "vue-language-server";
-        };
+        juliaLsp = pkgs.writeShellApplication {
+          name = "julia-lsp";
+          runtimeInputs = [ pkgs.julia ];
+          text = ''
+            CACHE_DIR="$HOME/.cache/julia-lsp"
+            export JULIA_DEPOT_PATH="$CACHE_DIR"
 
-        astroLsp = mkLspWrapper {
-          inherit pkgs;
-          name = "astro-lsp";
-          npmPackages = [ "@astrojs/language-server" ];
-          bin = "astro-ls";
-        };
+            if [ ! -d "$CACHE_DIR/compiled" ]; then
+              echo "Installing LanguageServer.jl into $CACHE_DIR..."
+              mkdir -p "$CACHE_DIR"
+              julia --project="$CACHE_DIR" -e '
+                using Pkg
+                Pkg.add("LanguageServer")
+                Pkg.add("SymbolServer")
+                Pkg.precompile()
+              '
+            fi
 
-        eslintLsp = mkLspWrapper {
-          inherit pkgs;
-          name = "eslint-lsp";
-          npmPackages = [ "vscode-langservers-extracted" ];
-          bin = "vscode-eslint-language-server";
-        };
-
-        cssLsp = mkLspWrapper {
-          inherit pkgs;
-          name = "css-lsp";
-          npmPackages = [ "vscode-langservers-extracted" ];
-          bin = "vscode-css-language-server";
+            exec julia "$@"
+          '';
         };
 
         emacsLspDeps = with pkgs; [
           emacs
 
-          nodejs
-
           # Typescript
-          typescriptLsp
+          lspWrappers.typescript
 
-          # Eslint
-          eslintLsp
+          # ESLint / CSS / HTML / JSON
+          lspWrappers.eslint
+          lspWrappers.css
+          lspWrappers.html
+          lspWrappers.json
 
-          # CSS
-          cssLsp
-
-          # Vue
-          vueLSP
-
-          # Astro
-          astroLsp
+          # Vue / Astro
+          lspWrappers.vue
+          lspWrappers.astro
 
           # YAML
           nodePackages.yaml-language-server
 
-          python3
-          python3Packages.python-lsp-server
+          # Julia
+          juliaLsp
 
+          # LaTeX
+          texlab
+
+          # Rust
           rust-analyzer
+
+          # Fortran
+          fortls
+
+          # Python3
+          python313
+          python313Packages.ruff
+          pyright
+
+          # Markdown
+          marksman
         ];
 
         in
           { name = s.system;
-            value = pkgs.mkShell { buildInputs = [ pkgs.emacs ];};
+            value = pkgs.mkShell { buildInputs = emacsLspDeps;};
           }
       ) systems);
     };
