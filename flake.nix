@@ -21,6 +21,10 @@
 
     mkHome = { name, system, homeDir }: let
       pkgs = import nixpkgs { inherit system; };
+      emacsWithTreeSitter = pkgs.emacs30.override {
+        withTreeSitter = true;
+      };
+      emacsPkgs = pkgs.emacsPackagesFor emacsWithTreeSitter;
     in
       home-manager.lib.homeManagerConfiguration {
         inherit pkgs system;
@@ -31,7 +35,11 @@
           ({ config, pkgs, ...}: {
             programs.emacs = {
               enable = true;
-              package = pkgs.emacs;
+              package = emacsWithTreeSitter;
+              extraPackages = epkgs: [
+                epkgs.tree-sitter-langs
+                epkgs.use-package
+              ];
               extraConfig = builtins.readFile ./init.el;
             };
             home.file.".emacs.d/init.el".source = ./init.el;
@@ -148,6 +156,9 @@
 
         emacsLspDeps = with pkgs; [
           emacs
+
+          # Tree-sitter
+          tree-sitter
 
           # Typescript
           lspWrappers.typescript
