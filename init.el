@@ -151,6 +151,9 @@
   :mode
   ("\\.nix\\'" . nix-ts-mode))
 
+(use-package vterm
+  :ensure t)
+
 (use-package ivy
   :ensure t
   :config
