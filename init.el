@@ -84,19 +84,6 @@
   :init
   (add-to-list 'major-mode-remap-alist '(sh-mode . bash-ts-mode)))
 
-(use-package web-mode
-  :ensure t
-  :mode
-  ("\\.vue\\'" . web-mode)
-  ("\\.astro\\'" . web-mode)
-  :config
-  (setq web-mode-markup-indent-offset 2)
-  (setq web-mode-css-indent-offset 2)
-  (setq web-mode-code-indent-offset 2)
-  (setq web-mode-script-padding 0)
-  (setq web-mode-style-padding 0)
-  (setq web-mode-block-padding 0))
-
 (use-package typescript-ts-mode
   :ensure t
   :mode
@@ -132,6 +119,19 @@
   :ensure t
   :mode
   ("\\.nix\\'" . nix-ts-mode))
+
+(use-package web-mode
+  :ensure t
+  :mode
+  ("\\.vue\\'" . web-mode)
+  ("\\.astro\\'" . web-mode)
+  :config
+  (setq web-mode-markup-indent-offset 2)
+  (setq web-mode-css-indent-offset 2)
+  (setq web-mode-code-indent-offset 2)
+  (setq web-mode-script-padding 0)
+  (setq web-mode-style-padding 0)
+  (setq web-mode-block-padding 0))
 
 (use-package vterm
   :ensure t)
