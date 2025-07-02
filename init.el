@@ -230,11 +230,6 @@
 
 (use-package lsp-yaml
   :custom
-  (lsp-yaml-server-command `("apptainer"
-                             "run"
-                             ,(concat user-home-directory
-                                      "dotfiles/images/yaml_language_server.sif")
-                             "--stdio"))
   (lsp-yaml-custom-tags (vector
                          "!And"
                          "!If"
@@ -325,11 +320,8 @@
            (list :name "@astrojs/ts-plugin"
                  :location "/usr/local/lib/node_modules/@astrojs/ts-plugin"
                  :languages (vector "typescript" "javascript" "astro"))))
-  (lsp-clients-typescript-tls-path "apptainer")
-  (lsp-clients-typescript-server-args `("run"
-                                        ,(concat user-home-directory
-                                                 "dotfiles/images/typescript_language_server.sif")
-                                        "--stdio"))
+  (lsp-clients-typescript-tls-path "typescript-lsp")
+  (lsp-clients-typescript-server-args '("--stdio"))
   ;; Disable format for ts-ls.
   (lsp-javascript-format-enable nil)
   (lsp-typescript-format-enable nil)
@@ -385,8 +377,6 @@
   :config
   (lsp-dependency 'typescript
                   (remove '(:system "tsserver") (gethash 'typescript lsp--dependencies)))
-  (remhash 'volar-language-server lsp--dependencies)
-  (lsp-dependency 'volar-language-server '(:system "apptainer"))
   (let ((vue-client (copy-lsp--client (gethash 'vue-semantic-server lsp-clients))))
     (when vue-client
       (remhash 'vue-semantic-server lsp-clients)
@@ -395,12 +385,7 @@
                 :language-id (lsp--client-language-id vue-client)
                 :add-on? t
                 :new-connection
-                (lsp-stdio-connection (lambda ()
-                                        `(,(lsp-package-path 'volar-language-server)
-                                          "run"
-                                          ,(concat user-home-directory
-                                                   "dotfiles/images/vue_language_server.sif")
-                                          "--stdio")))
+                (lsp-stdio-connection (lambda () '("vue-lsp" "--stdio")))
                 :ignore-regexps (lsp--client-ignore-regexps vue-client)
                 :ignore-messages (lsp--client-ignore-messages vue-client)
                 :notification-handlers (lsp--client-notification-handlers vue-client)
@@ -445,11 +430,7 @@
           (and (derived-mode-p 'js-mode 'js2-mode 'typescript-mode 'typescript-ts-mode 'html-mode 'svelte-mode)
                (not (string-match-p "\\.json\\'" filename))))))
   :custom
-  (lsp-eslint-server-command `("apptainer"
-                               "run"
-                               ,(concat user-home-directory
-                                        "dotfiles/images/eslint_language_server.sif")
-                               "--stdio"))
+  (lsp-eslint-server-command '("eslint-lsp" "--stdio"))
   ;; eslintのformatを無効にする
   (lsp-eslint-format nil)
   :config
@@ -498,7 +479,7 @@
 (use-package lsp-css
   :config
   (remhash 'css-languageserver lsp--dependencies)
-  (lsp-dependency 'css-languageserver '(:system "apptainer"))
+  (lsp-dependency 'css-languageserver '(:system "css-lsp"))
   (let ((css-client (copy-lsp--client (gethash 'css-ls lsp-clients))))
     (when css-client
       (remhash 'css-ls lsp-clients)
@@ -509,9 +490,6 @@
                 :new-connection
                 (lsp-stdio-connection (lambda ()
                                         (list (lsp-package-path 'css-languageserver)
-                                              "run"
-                                              (concat user-home-directory
-                                                      "dotfiles/images/css_language_server.sif")
                                               "--stdio")))
                 :ignore-regexps (lsp--client-ignore-regexps css-client)
                 :ignore-messages (lsp--client-ignore-messages css-client)
@@ -552,7 +530,7 @@
   (lsp-dependency 'typescript
                   (remove '(:system "tsserver") (gethash 'typescript lsp--dependencies)))
   (remhash 'astro-language-server lsp--dependencies)
-  (lsp-dependency 'astro-language-server '(:system "apptainer"))
+  (lsp-dependency 'astro-language-server '(:system "astro-lsp"))
   (let ((astro-client (copy-lsp--client (gethash 'astro-ls lsp-clients))))
     (when astro-client
       (remhash 'astro-ls lsp-clients)
@@ -563,9 +541,6 @@
                 :new-connection
                 (lsp-stdio-connection (lambda ()
                                         (list (lsp-package-path 'astro-language-server)
-                                              "run"
-                                              (concat user-home-directory
-                                                      "dotfiles/images/astro_language_server.sif")
                                               "--stdio")))
                 :ignore-regexps (lsp--client-ignore-regexps astro-client)
                 :ignore-messages (lsp--client-ignore-messages astro-client)
@@ -615,10 +590,7 @@
                 :new-connection
                 (lsp-stdio-connection (lambda ()
                                         (append
-                                         `("apptainer"
-                                           "run"
-                                           ,(concat user-home-directory
-                                                    "dotfiles/images/julia_language_server.sif"))
+                                         '("julia-lsp")
                                          (cdr (lsp-julia--rls-command)))))
                 :ignore-regexps (lsp--client-ignore-regexps julia-client)
                 :ignore-messages (lsp--client-ignore-messages julia-client)
@@ -655,14 +627,6 @@
                lsp-clients))))
 
 (use-package lsp-tex
-  :preface
-  (defun my-lsp-clients-texlab-args ()
-    `(,lsp-clients-texlab-executable
-      "run"
-      ,(concat user-home-directory
-               "dotfiles/images/latex_language_server.sif")))
-  :custom
-  (lsp-clients-texlab-executable "apptainer")
   :config
   (let ((texlab-client (gethash 'texlab lsp-clients)))
     (when texlab-client
@@ -671,7 +635,7 @@
                (make-lsp--client
                 :language-id (lsp--client-language-id texlab-client)
                 :add-on? (lsp--client-add-on? texlab-client)
-                :new-connection (lsp-stdio-connection (my-lsp-clients-texlab-args))
+                :new-connection (lsp--client-new-connection texlab-client)
                 :ignore-regexps (lsp--client-ignore-regexps texlab-client)
                 :ignore-messages (lsp--client-ignore-messages texlab-client)
                 :notification-handlers (lsp--client-notification-handlers texlab-client)
@@ -706,32 +670,15 @@
                 )
                lsp-clients))))
 
-(use-package lsp-rust
-  :if (eq system-type 'gnu/linux)
-  :custom
-  (lsp-rust-analyzer-server-command
-   `("apptainer" "run" ,(concat user-home-directory
-                                "dotfiles/images/"
-                                "rust_language_server.sif")))
-  :config
-  (remhash 'rust-analyzer lsp--dependencies)
-  (lsp-dependency 'rust-analyzer '(:system "apptainer")))
+(use-package lsp-rust)
 
 (use-package lsp-fortran
   :custom
-  (lsp-clients-fortls-executable "apptainer")
-  (lsp-clients-fortls-args `("run"
-                             ,(concat user-home-directory
-                                      "dotfiles/images/fortran_language_server.sif")
-                             "--lowercase_intrinsics")))
+  (lsp-clients-fortls-executable "fortls")
+  (lsp-clients-fortls-args '("--lowercase_intrinsics")))
 
 (use-package lsp-ruff
   :custom
-  (lsp-ruff-server-command `("apptainer"
-                             "run"
-                             ,(concat user-home-directory
-                                      "dotfiles/images/python_ruff.sif")
-                             "server"))
   (lsp-ruff-show-notifications "always")
   :config
   (let ((ruff-client (copy-lsp--client (gethash 'ruff lsp-clients))))
@@ -794,17 +741,12 @@
 (use-package lsp-pyright
   :ensure t
   :custom
-  (lsp-pyright-langserver-command-args `("run"
-                                         ,(concat user-home-directory
-                                                  "dotfiles/images/python_pyright.sif")
-                                         "--stdio"))
+  (lsp-pyright-langserver-command-args '("--stdio"))
   (lsp-pyright-diagnostic-mode  "workspace")
   (lsp-pyright-python-executable-cmd "python3")
   (lsp-pyright-auto-import-completions nil)
   (lsp-pyright-type-checking-mode "strict")
   :config
-  (remhash 'pyright lsp--dependencies)
-  (lsp-dependency 'pyright '(:system "apptainer"))
   (let ((pyright-client (copy-lsp--client (gethash 'pyright lsp-clients))))
     (when pyright-client
       (remhash 'pyright lsp-clients)
@@ -847,15 +789,7 @@
                 )
                lsp-clients))))
 
-(use-package lsp-marksman
-  :custom
-  (lsp-marksman-server-command "apptainer")
-  (lsp-marksman-server-command-args `("run"
-                                      ,(concat user-home-directory
-                                               "dotfiles/images/marksman_x64.sif")))
-  :config
-  (remhash 'marksman lsp--dependencies)
-  (lsp-dependency 'marksman '(:system "apptainer")))
+(use-package lsp-marksman)
 
 (use-package lsp-json
   :config
