@@ -21,10 +21,12 @@
 
     mkHome = { name, system, homeDir }: let
       pkgs = import nixpkgs { inherit system; };
-      emacsWithTreeSitter = pkgs.emacs30.override {
+      emacsWithModules = pkgs.emacs30.override {
         withTreeSitter = true;
+        withGTK = true;
+        withModules = true;
       };
-      emacsPkgs = pkgs.emacsPackagesFor emacsWithTreeSitter;
+      emacsPkgs = pkgs.emacsPackagesFor emacsWithModules;
     in
       home-manager.lib.homeManagerConfiguration {
         inherit pkgs system;
@@ -35,8 +37,9 @@
           ({ config, pkgs, ...}: {
             programs.emacs = {
               enable = true;
-              package = emacsWithTreeSitter;
+              package = emacsWithModules;
               extraPackages = epkgs: [
+                epkgs.vterm
                 epkgs.tree-sitter-langs
                 epkgs.use-package
               ];
@@ -154,7 +157,7 @@
           '';
         };
 
-        emacsLspDeps = with pkgs; [
+        emacsDeps = with pkgs; [
           emacs
 
           # Tree-sitter
@@ -195,11 +198,16 @@
 
           # Markdown
           marksman
+
+          # Vterm
+          cmake
+          libtool
+          libvterm
         ];
 
         in
           { name = s.system;
-            value = pkgs.mkShell { buildInputs = emacsLspDeps;};
+            value = pkgs.mkShell { buildInputs = emacsDeps;};
           }
       ) systems);
     };
