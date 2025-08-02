@@ -77,8 +77,8 @@
     {
       homeConfigurations = homeConfigs;
 
-      devShells = builtins.listToAttrs (map (s:
-        let pkgs = import nixpkgs { inherit (s) system; };
+      devShells = nixpkgs.lib.genAttrs (map (s: s.system) systems) (systemName: let
+        pkgs = import nixpkgs { system = systemName; };
         lspWrappers = {
           typescript = mkLspWrapper {
             inherit pkgs;
@@ -204,13 +204,8 @@
           libtool
           libvterm
         ];
-
-        in
-          { name = s.system;
-            value = {
-              default = pkgs.mkShell { buildInputs = emacsDeps;};
-            };
-          }
-      ) systems);
+      in
+         pkgs.mkShell { buildInputs = emacsDeps;}
+      );
     };
 }
