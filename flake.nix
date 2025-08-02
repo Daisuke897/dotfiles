@@ -207,7 +207,9 @@
 
         in
           { name = s.system;
-            value = pkgs.mkShell { buildInputs = emacsDeps;};
+            value = {
+              default = pkgs.mkShell { buildInputs = emacsDeps;};
+            };
           }
       ) systems);
     };
