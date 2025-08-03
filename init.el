@@ -315,10 +315,10 @@
   (lsp-clients-typescript-prefer-use-project-ts-server t)
   (lsp-clients-typescript-plugins
    (vector (list :name "@vue/typescript-plugin"
-                 :location "/usr/local/lib/node_modules/@vue/typescript-plugin"
+                 :location (expand-file-name "~/.cache/typescript-lsp/node_modules/@vue/typescript-plugin")
                  :languages (vector "typescript" "javascript" "vue"))
            (list :name "@astrojs/ts-plugin"
-                 :location "/usr/local/lib/node_modules/@astrojs/ts-plugin"
+                 :location (expand-file-name "~/.cache/typescript-lsp/node_modules/@astrojs/ts-plugin")
                  :languages (vector "typescript" "javascript" "astro"))))
   (lsp-clients-typescript-tls-path "typescript-lsp")
   (lsp-clients-typescript-server-args '("--stdio"))
