@@ -53,8 +53,6 @@
           npmPackages = [
             "typescript"
             "typescript-language-server"
-            "@vue/typescript-plugin"
-            "@astrojs/ts-plugin"
           ];
           bin = "typescript-language-server";
         };

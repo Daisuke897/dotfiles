@@ -224,9 +224,7 @@
   (json-ts-mode . lsp)
   (css-ts-mode . lsp)
   :config
-  (push 'semgrep-ls lsp-disabled-clients)
-  (lsp-dependency 'typescript
-                  (remove '(:system "tsserver") (gethash 'typescript lsp--dependencies))))
+  (push 'semgrep-ls lsp-disabled-clients))
 
 (use-package lsp-yaml
   :custom
@@ -312,13 +310,11 @@
         (and (derived-mode-p 'js-mode 'js-ts-mode 'typescript-mode 'typescript-ts-mode)
              (not (derived-mode-p 'json-mode)))))
   :custom
-  (lsp-clients-typescript-prefer-use-project-ts-server t)
+  (lsp-clients-typescript-prefer-use-project-ts-server nil)
   (lsp-clients-typescript-plugins
    (vector (list :name "@vue/typescript-plugin"
-                 :location (expand-file-name "~/.cache/typescript-lsp/node_modules/@vue/typescript-plugin")
                  :languages (vector "typescript" "javascript" "vue"))
            (list :name "@astrojs/ts-plugin"
-                 :location (expand-file-name "~/.cache/typescript-lsp/node_modules/@astrojs/ts-plugin")
                  :languages (vector "typescript" "javascript" "astro"))))
   (lsp-clients-typescript-tls-path "typescript-lsp")
   (lsp-clients-typescript-server-args '("--stdio"))
@@ -326,8 +322,6 @@
   (lsp-javascript-format-enable nil)
   (lsp-typescript-format-enable nil)
   :config
-  (lsp-dependency 'typescript
-                  (remove '(:system "tsserver") (gethash 'typescript lsp--dependencies)))
   (let ((js-client (copy-lsp--client (gethash 'ts-ls lsp-clients))))
     (when js-client
       (remhash 'ts-ls lsp-clients)
@@ -375,8 +369,6 @@
   (lsp-volar-hybrid-mode t)
   (lsp-volar-take-over-mode nil)
   :config
-  (lsp-dependency 'typescript
-                  (remove '(:system "tsserver") (gethash 'typescript lsp--dependencies)))
   (let ((vue-client (copy-lsp--client (gethash 'vue-semantic-server lsp-clients))))
     (when vue-client
       (remhash 'vue-semantic-server lsp-clients)
@@ -527,8 +519,6 @@
 
 (use-package lsp-astro
   :config
-  (lsp-dependency 'typescript
-                  (remove '(:system "tsserver") (gethash 'typescript lsp--dependencies)))
   (remhash 'astro-language-server lsp--dependencies)
   (lsp-dependency 'astro-language-server '(:system "astro-lsp"))
   (let ((astro-client (copy-lsp--client (gethash 'astro-ls lsp-clients))))
