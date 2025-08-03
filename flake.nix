@@ -1,60 +1,21 @@
 {
-  description = "Daisuke’s cross-platform Emacs + Home-Manager flake";
+  description = "Daisuke’s devShell-first Emacs flake";
 
   inputs = {
     nixpkgs = {
       url = "github:NixOS/nixpkgs/nixos-25.05";
     };
-
-    home-manager = {
-      url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
-  outputs = { self, nixpkgs, home-manager, ... }:
+  outputs = { self, nixpkgs, ... }:
   let
-    systems = [
-      { name = "linux"; system = "x86_64-linux"; homeDir = "/home/daisuke"; }
-      { name = "macos"; system = "aarch64-darwin"; homeDir = "/Users/daisuke"; }
-    ];
+    systems = ["x86_64-linux" "aarch64-darwin" ];
 
-    mkHome = { name, system, homeDir }: let
-      pkgs = import nixpkgs { inherit system; };
-      emacsWithModules = pkgs.emacs30.override {
-        withTreeSitter = true;
-        withGTK = true;
-        withModules = true;
-      };
-      emacsPkgs = pkgs.emacsPackagesFor emacsWithModules;
-    in
-      home-manager.lib.homeManagerConfiguration {
-        inherit pkgs system;
-        home.username = "daisuke";
-        home.homeDirectory = homeDir;
-
-        modules = [
-          ({ config, pkgs, ...}: {
-            programs.emacs = {
-              enable = true;
-              package = emacsWithModules;
-              extraPackages = epkgs: [
-                epkgs.vterm
-                epkgs.tree-sitter-langs
-                epkgs.use-package
-              ];
-              extraConfig = builtins.readFile ./init.el;
-            };
-            home.file.".emacs.d/init.el".source = ./init.el;
-          })
-        ];
-      };
-
-      mkLspWrapper = { pkgs, name, npmPackages, bin }: pkgs.writeShellApplication {
-        inherit name;
-        runtimeInputs = [ pkgs.nodejs pkgs.git ];
-        text = ''
-          CACHE_DIR="$HOME/.cache/${name}"
+    mkLspWrapper = { pkgs, name, npmPackages, bin }: pkgs.writeShellApplication {
+      inherit name;
+      runtimeInputs = [ pkgs.nodejs pkgs.git ];
+      text = ''
+        CACHE_DIR="$HOME/.cache/${name}"
           export NODE_PATH="$CACHE_DIR/node_modules"
           export PATH="$CACHE_DIR/node_modules/.bin:$PATH"
 
@@ -66,80 +27,86 @@
           fi
 
           exec ${bin} "$@"
-        '';
+      '';
+    };
+
+    mkDevShell = system: let
+      pkgs = import nixpkgs { inherit system; };
+
+      baseEmacs = pkgs.emacs30.override {
+        withTreeSitter        = true;
+        withGTK3              = true;
+        withNativeCompilation = true;
       };
 
-      homeConfigs = builtins.listToAttrs (map (s:
-        { name = "daisuke-${s.name}";
-          value = mkHome s;}
-      ) systems);
-  in
-    {
-      homeConfigurations = homeConfigs;
+      emacsFull = pkgs.emacs.pkgs.withPackages (epkgs: with epkgs; [
+        baseEmacs
+        vterm
+        use-package
+        tree-sitter-langs
+      ]);
 
-      devShells = nixpkgs.lib.genAttrs (map (s: s.system) systems) (systemName: let
-        pkgs = import nixpkgs { system = systemName; };
-        lspWrappers = {
-          typescript = mkLspWrapper {
-            inherit pkgs;
-            name = "typescript-lsp";
-            npmPackages = [
-              "typescript"
-              "typescript-language-server"
-              "@vue/typescript-plugin"
-              "@astrojs/ts-plugin"
-            ];
-            bin = "typescript-language-server";
-          };
-
-          vue = mkLspWrapper {
-            inherit pkgs;
-            name = "vue-lsp";
-            npmPackages = [ "@vue/language-server" ];
-            bin = "vue-language-server";
-          };
-
-          astro = mkLspWrapper {
-            inherit pkgs;
-            name = "astro-lsp";
-            npmPackages = [ "@astrojs/language-server" ];
-            bin = "astro-ls";
-          };
-
-          eslint = mkLspWrapper {
-            inherit pkgs;
-            name = "eslint-lsp";
-            npmPackages = [ "vscode-langservers-extracted" ];
-            bin = "vscode-eslint-language-server";
-          };
-
-          css = mkLspWrapper {
-            inherit pkgs;
-            name = "css-lsp";
-            npmPackages = [ "vscode-langservers-extracted" ];
-            bin = "vscode-css-language-server";
-          };
-
-          html = mkLspWrapper {
-            inherit pkgs;
-            name = "html-lsp";
-            npmPackages = [ "vscode-langservers-extracted" ];
-            bin = "vscode-html-language-server";
-          };
-
-          json = mkLspWrapper {
-            inherit pkgs;
-            name = "json-lsp";
-            npmPackages = [ "vscode-langservers-extracted" ];
-            bin = "vscode-json-language-server";
-          };
+      lspWrappers = {
+        typescript = mkLspWrapper {
+          inherit pkgs;
+          name = "typescript-lsp";
+          npmPackages = [
+            "typescript"
+            "typescript-language-server"
+            "@vue/typescript-plugin"
+            "@astrojs/ts-plugin"
+          ];
+          bin = "typescript-language-server";
         };
 
-        juliaLsp = pkgs.writeShellApplication {
-          name = "julia-lsp";
-          runtimeInputs = [ pkgs.julia ];
-          text = ''
-            CACHE_DIR="$HOME/.cache/julia-lsp"
+        vue = mkLspWrapper {
+          inherit pkgs;
+          name = "vue-lsp";
+          npmPackages = [ "@vue/language-server" ];
+          bin = "vue-language-server";
+        };
+
+        astro = mkLspWrapper {
+          inherit pkgs;
+          name = "astro-lsp";
+          npmPackages = [ "@astrojs/language-server" ];
+          bin = "astro-ls";
+        };
+
+        eslint = mkLspWrapper {
+          inherit pkgs;
+          name = "eslint-lsp";
+          npmPackages = [ "vscode-langservers-extracted" ];
+          bin = "vscode-eslint-language-server";
+        };
+
+        css = mkLspWrapper {
+          inherit pkgs;
+          name = "css-lsp";
+          npmPackages = [ "vscode-langservers-extracted" ];
+          bin = "vscode-css-language-server";
+        };
+
+        html = mkLspWrapper {
+          inherit pkgs;
+          name = "html-lsp";
+          npmPackages = [ "vscode-langservers-extracted" ];
+          bin = "vscode-html-language-server";
+        };
+
+        json = mkLspWrapper {
+          inherit pkgs;
+          name = "json-lsp";
+          npmPackages = [ "vscode-langservers-extracted" ];
+          bin = "vscode-json-language-server";
+        };
+      };
+
+      juliaLsp = pkgs.writeShellApplication {
+        name = "julia-lsp";
+        runtimeInputs = [ pkgs.julia ];
+        text = ''
+          CACHE_DIR="$HOME/.cache/julia-lsp"
             export JULIA_DEPOT_PATH="$CACHE_DIR"
 
             if [ ! -d "$CACHE_DIR/compiled" ]; then
@@ -154,58 +121,63 @@
             fi
 
             exec julia "$@"
-          '';
-        };
+        '';
+      };
 
-        emacsDeps = with pkgs; [
-          emacs
+      emacsDeps = with pkgs; [
+        emacsFull
+        tree-sitter
+        libvterm
 
-          # Tree-sitter
-          tree-sitter
+        # Typescript
+        lspWrappers.typescript
 
-          # Typescript
-          lspWrappers.typescript
+        # ESLint / CSS / HTML / JSON
+        lspWrappers.eslint
+        lspWrappers.css
+        lspWrappers.html
+        lspWrappers.json
 
-          # ESLint / CSS / HTML / JSON
-          lspWrappers.eslint
-          lspWrappers.css
-          lspWrappers.html
-          lspWrappers.json
+        # Vue / Astro
+        lspWrappers.vue
+        lspWrappers.astro
 
-          # Vue / Astro
-          lspWrappers.vue
-          lspWrappers.astro
+        # YAML
+        nodePackages.yaml-language-server
 
-          # YAML
-          nodePackages.yaml-language-server
+        # Julia
+        juliaLsp
 
-          # Julia
-          juliaLsp
+        # LaTeX
+        texlab
 
-          # LaTeX
-          texlab
+        # Rust
+        rust-analyzer
 
-          # Rust
-          rust-analyzer
+        # Fortran
+        fortls
 
-          # Fortran
-          fortls
+        # Python3
+        python313
+        python313Packages.ruff
+        pyright
 
-          # Python3
-          python313
-          python313Packages.ruff
-          pyright
-
-          # Markdown
-          marksman
-
-          # Vterm
-          cmake
-          libtool
-          libvterm
-        ];
-      in
-         pkgs.mkShell { buildInputs = emacsDeps;}
-      );
+        # Markdown
+        marksman
+      ];
+    in
+      pkgs.mkShell {
+        buildInputs = emacsDeps;
+        shellHook = ''
+          [ -L $HOME/.emacs.d/init.el ] || {
+            mkdir -p $HOME/.emacs.d
+            ln -s ${toString ./init.el} $HOME/.emacs.d/init.el
+          }
+          export PATH=${pkgs.lib.makeBinPath emacsDeps}:$PATH
+        '';
+      };
+  in
+    {
+      devShells = nixpkgs.lib.genAttrs systems (system: mkDevShell system);
     };
 }
