@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: debian:bookworm-slim
+From: debian:latest
 
 %post
     apt-get update && apt-get install -y curl libicu72 ca-certificates
