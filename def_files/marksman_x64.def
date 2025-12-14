@@ -2,7 +2,7 @@ Bootstrap: docker
 From: debian:latest
 
 %post
-    apt-get update && apt-get install -y curl libicu72 ca-certificates
+    apt-get update && apt-get install -y curl ca-certificates
     curl -L -o /usr/local/bin/marksman https://github.com/artempyanykh/marksman/releases/latest/download/marksman-linux-x64
 
     chmod +x /usr/local/bin/marksman

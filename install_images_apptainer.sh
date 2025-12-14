@@ -1,83 +1,39 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-mkdir -p images/
+mkdir -p images/i
 
-apptainer build \
-          -F \
-	  images/julia_language_server.sif \
-	  def_files/julia_language_server.def
+IMAGES_DIR="images"
+DEF_DIR="def_files"
 
-apptainer build \
-          -F \
-	  images/fortran_language_server.sif \
-	  def_files/fortran_language_server.def
+mkdir -p "$IMAGES_DIR"
 
-apptainer build \
-          -F \
-	  images/latex_language_server.sif \
-	  def_files/latex_language_server.def
+build() {
+  local name="$1"
+  local image="$IMAGES_DIR/${name}.sif"
+  local def="$DEF_DIR/${name}.def"
 
-apptainer build \
-          -F \
-	  images/rust_language_server.sif \
-	  def_files/rust_language_server.def
+  if [[ -f "$image" ]]; then
+    echo "==> Skipping $name (image already exists)"
+    return 0
+  fi
 
-apptainer build \
-          -F \
-	  ./images/python_pyright.sif \
-	  ./def_files/python_pyright.def
+  echo "==> Building $name"
+  apptainer build "$image" "$def"
+}
 
-apptainer build \
-          -F \
-	  ./images/python_ruff.sif \
-	  ./def_files/python_ruff.def
-
-apptainer build \
-          -F \
-          ./images/eslint_language_server.sif \
-          ./def_files/eslint_language_server.def
-
-apptainer build \
-          -F \
-          ./images/vue_language_server.sif \
-          ./def_files/vue_language_server.def
-
-apptainer build \
-          -F \
-          ./images/typescript_language_server.sif \
-          ./def_files/typescript_language_server.def
-
-apptainer build \
-          -F \
-          ./images/aws-cli.sif \
-          ./def_files/awscli.def
-
-apptainer build \
-          -F \
-          ./images/cfn-lint.sif \
-          ./def_files/cfn_lint.def
-
-apptainer build \
-          -F \
-          ./images/ffmpeg.sif \
-          ./def_files/ffmpeg.def
-
-apptainer build \
-          -F \
-          ./images/marksman_x64.sif \
-          ./def_files/marksman_x64.def
-
-apptainer build \
-          -F \
-          ./images/json_language_server.sif \
-          ./def_files/json_language_server.def
-
-apptainer build \
-          -F \
-          ./images/css_language_server.sif \
-          ./def_files/css_language_server.def
-
-apptainer build \
-          -F \
-          ./images/astro_language_server.sif \
-          ./def_files/astro_language_server.def
+build julia_language_server
+build fortran_language_server
+build latex_language_server
+build rust_language_server
+build python_pyright
+build python_ruff
+build eslint_language_server
+build vue_language_server
+build typescript_language_server
+build aws-cli
+build cfn_lint
+build marksman_x64
+build json_language_server
+build css_language_server
+build astro_language_server
