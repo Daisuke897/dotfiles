@@ -227,15 +227,54 @@
   (push 'semgrep-ls lsp-disabled-clients))
 
 (defun my/lsp-client-override (id &rest overrides)
-  "Copy LSP client with ID and apply OVERRIDES."
-  (let ((client (copy-lsp--client (gethash id lsp-clients))))
-    (when client
-      (while overrides
-        (let ((slot (pop overrides))
-              (value (pop overrides)))
-          (setf (funcall slot client) value)))
-      (apply #'setf overrides)
-      (puthash id client lsp-clients))))
+  "Create a new lsp client based on ID and apply OVERRIDES."
+  (let ((base (gethash id lsp-clients)))
+    (when base
+      (let ((new-client
+             (make-lsp--client
+              :language-id (lsp--client-language-id base)
+              :add-on? (or (plist-get overrides :add-on?)
+                           (lsp--client-add-on? base))
+              :new-connection (or (plist-get overrides :new-connection)
+                                  (lsp--client-new-connection base))
+              :ignore-regexps (lsp--client-ignore-regexps base)
+              :ignore-messages (lsp--client-ignore-messages base)
+              :notification-handlers (lsp--client-notification-handlers base)
+              :request-handlers (lsp--client-request-handlers base)
+              :response-handlers (lsp--client-response-handlers base)
+              :prefix-function (lsp--client-prefix-function base)
+              :uri-handlers (lsp--client-uri-handlers base)
+              :action-handlers (lsp--client-action-handlers base)
+              :action-filter (lsp--client-action-filter base)
+              :major-modes (lsp--client-major-modes base)
+              :activation-fn (or (plist-get overrides :activation-fn)
+                                 (lsp--client-activation-fn base))
+              :priority (or (plist-get overrides :priority)
+                            (lsp--client-priority base))
+              :server-id (lsp--client-server-id base)
+              :multi-root (lsp--client-multi-root base)
+              :initialization-options
+              (or (plist-get overrides :initialization-options)
+                  (lsp--client-initialization-options base))
+              :semantic-tokens-faces-overrides
+              (lsp--client-semantic-tokens-faces-overrides base)
+              :custom-capabilities (lsp--client-custom-capabilities base)
+              :library-folders-fn (lsp--client-library-folders-fn base)
+              :before-file-open-fn (lsp--client-before-file-open-fn base)
+              :initialized-fn (lsp--client-initialized-fn base)
+              :remote? (lsp--client-remote? base)
+              :completion-in-comments? (lsp--client-completion-in-comments? base)
+              :path->uri-fn (lsp--client-path->uri-fn base)
+              :uri->path-fn (lsp--client-uri->path-fn base)
+              :environment-fn (lsp--client-environment-fn base)
+              :after-open-fn (lsp--client-after-open-fn base)
+              :async-request-handlers (lsp--client-async-request-handlers base)
+              :download-server-fn (lsp--client-download-server-fn base)
+              :download-in-progress? (lsp--client-download-in-progress? base)
+              :buffers (lsp--client-buffers base)
+              :synchronize-sections (lsp--client-synchronize-sections base))))
+        (puthash id new-client lsp-clients)
+        new-client))))
 
 (use-package lsp-yaml
   :custom
@@ -269,7 +308,7 @@
                          "!Split sequence"))
   :config
   (my/lsp-client-override 'yamlls
-                          #'lsp--client-add-on? t))
+                          :add-on? t))
 
 (use-package lsp-javascript
   :preface
@@ -297,9 +336,9 @@
   (lsp-typescript-format-enable nil)
   :config
   (my/lsp-client-override 'ts-ls
-                          #'lsp--client-add-on? t
-                          #'lsp--client-activation-fn #'my/lsp-typescript-javascript-tsx-jsx-activate-p
-                          #'lsp--client-priority 0))
+                          :add-on? t
+                          :activation-fn #'my/lsp-typescript-javascript-tsx-jsx-activate-p
+                          :priority 0))
 
 (use-package lsp-volar
   :custom
@@ -307,9 +346,9 @@
   (lsp-volar-take-over-mode nil)
   :config
   (my/lsp-client-override 'vue-semantic-server
-                          #'lsp--client-add-on? t
-                          #'lsp--client-new-connection (lsp-stdio-connection (lambda () '("vue-lsp" "--stdio")))
-                          #'lsp--client-priority 0))
+                          :add-on? t
+                          :new-connection (lsp-stdio-connection (lambda () '("vue-lsp" "--stdio")))
+                          :priority 0))
 
 (use-package lsp-eslint
   :preface
@@ -327,42 +366,42 @@
   (lsp-eslint-format nil)
   :config
   (my/lsp-client-override 'eslint
-                          #'lsp--client-add-on? t
-                          #'lsp--client-activation-fn #'my/lsp-eslint-activate-p
-                          #'lsp--client-priority 0))
+                          :add-on? t
+                          :activation-fn #'my/lsp-eslint-activate-p
+                          :priority 0))
 
 (use-package lsp-css
   :config
   (remhash 'css-languageserver lsp--dependencies)
   (lsp-dependency 'css-languageserver '(:system "css-lsp"))
   (my/lsp-client-override 'css-ls
-                          #'lsp--client-add-on? t
-                          #'lsp--client-new-connection (lsp-stdio-connection
+                          :add-on? t
+                          :new-connection (lsp-stdio-connection
                                                         (lambda () (list (lsp-package-path 'css-languageserver) "--stdio")))
-                          #'lsp--client-priority 0))
+                          :priority 0))
 
 (use-package lsp-astro
   :config
   (remhash 'astro-language-server lsp--dependencies)
   (my/lsp-client-override 'astro-ls
-                          #'lsp--client-add-on? t
-                          #'lsp--client-new-connection (lsp-stdio-connection
+                          :add-on? t
+                          :new-connection (lsp-stdio-connection
                                                         (lambda () (list (lsp-package-path 'astro-language-server) "--stdio")))
-                          #'lsp--client-priority 0))
+                          :priority 0))
 
 (use-package lsp-julia
   :custom
   (lsp-julia-default-environment "~/.julia/environments/v1.11")
   :config
   (my/lsp-client-override 'julia-ls
-                          #'lsp--client-add-on? t
-                          #'lsp--client-new-connection (lsp-stdio-connection
+                          :add-on? t
+                          :new-connection (lsp-stdio-connection
                                                         (lambda () (append '("julia-lsp") (cdr (lsp-julia--rls-command)))))))
 
 (use-package lsp-tex
   :config
   (my/lsp-client-override 'texlab
-                          #'lsp--client-add-on? t))
+                          :add-on? t))
 
 (use-package lsp-rust)
 
@@ -376,9 +415,9 @@
   (lsp-ruff-show-notifications "always")
   :config
   (my/lsp-client-override 'ruff
-                          #'lsp--client-add-on? t
-                          #'lsp--client-priority -2
-                          #'lsp--client-initialization-options
+                          :add-on? t
+                          :priority -2
+                          :initialization-options
                           (list :settings
                                 (list
                                  :configuration (concat user-home-directory "dotfiles/ruff.toml")
@@ -405,8 +444,8 @@
   (lsp-pyright-type-checking-mode "strict")
   :config
   (my/lsp-client-override 'pyright
-                          #'lsp--client-add-on? t
-                          #'lsp--client-priority -2))
+                          :add-on? t
+                          :priority -2))
 
 (use-package lsp-marksman)
 
