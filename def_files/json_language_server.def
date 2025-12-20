@@ -1,9 +1,0 @@
-Bootstrap: docker
-From: node:latest
-
-%post
-    apt-get update && apt-get install -y ca-certificates
-    npm install -g vscode-json-languageserver
-
-%runscript
-    exec vscode-json-languageserver "$@"
