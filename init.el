@@ -276,7 +276,6 @@
 
 (use-package lsp-yaml
   :custom
-  (lsp-yaml-server-command '("yaml-language-server.sh" "--stdio"))
   (lsp-yaml-custom-tags (vector
                          "!And"
                          "!If"
@@ -322,23 +321,19 @@
         (and (derived-mode-p 'js-mode 'js-ts-mode 'typescript-mode 'typescript-ts-mode)
              (not (derived-mode-p 'json-mode)))))
   :custom
-  (lsp-clients-typescript-prefer-use-project-ts-server nil)
-  (lsp-clients-typescript-plugins
-   (vector (list :name "@vue/typescript-plugin"
-                 :location "/usr/local/lib/node_modules/@vue/typescript-plugin"
-                 :languages (vector "typescript" "javascript" "vue"))
-           (list :name "@astrojs/ts-plugin"
-                 :location "/usr/local/lib/node_modules/@astrojs/ts-plugin"
-                 :languages (vector "typescript" "javascript" "astro"))))
-  (lsp-clients-typescript-tls-path "typescript-language-server.sh")
-  (lsp-clients-typescript-server-args '("--stdio"))
+  (lsp-clients-typescript-prefer-use-project-ts-server t)
   ;; Disable format for ts-ls.
-  (lsp-javascript-format-enable nil)
-  (lsp-typescript-format-enable nil)
+  (lsp-javascript-format-enable t)
+  (lsp-typescript-format-enable t)
   :config
-  (remhash 'typescript lsp--dependencies)
-  (lsp-dependency 'typescript '(:system "typescript-language-server.sh"))
+  (remhash 'ts-ls lsp--dependencies)
   (my/lsp-client-override 'ts-ls
+                          :new-connection
+                            (lsp-stdio-connection
+                             (lambda ()
+                               (list (expand-file-name "node_modules/.bin/typescript-language-server"
+                                                       (lsp-workspace-root))
+                                     "--stdio")))
                           :add-on? t
                           :activation-fn #'my/lsp-typescript-javascript-tsx-jsx-activate-p
                           :priority 0))
@@ -348,10 +343,6 @@
   (lsp-volar-hybrid-mode t)
   (lsp-volar-take-over-mode nil)
   :config
-  (remhash 'typescript lsp--dependencies)
-  (lsp-dependency 'typescript '(:system "typescript-language-server.sh"))
-  (remhash 'volar-language-server lsp--dependencies)
-  (lsp-dependency 'volar-language-server '(:system "vue-language-server.sh"))
   (my/lsp-client-override 'vue-semantic-server
                           :add-on? t
                           :new-connection (lsp-stdio-connection (lambda () '("vue-lsp" "--stdio")))
@@ -369,18 +360,21 @@
           (and (derived-mode-p 'js-mode 'js2-mode 'typescript-mode 'typescript-ts-mode 'html-mode 'svelte-mode)
                (not (string-match-p "\\.json\\'" filename))))))
   :custom
-  (lsp-eslint-server-command '("eslint-language-server.sh" "--stdio"))
-  (lsp-eslint-format nil)
+  (lsp-eslint-format t)
   :config
   (my/lsp-client-override 'eslint
+                          :new-connection
+                          (lsp-stdio-connection
+                             (lambda ()
+                               (list (expand-file-name "node_modules/.bin/vscode-eslint-language-server"
+                                                       (lsp-workspace-root))
+                                     "--stdio")))
                           :add-on? t
                           :activation-fn #'my/lsp-eslint-activate-p
                           :priority 0))
 
 (use-package lsp-css
   :config
-  (remhash 'css-languageserver lsp--dependencies)
-  (lsp-dependency 'css-languageserver '(:system "css-language-server.sh"))
   (my/lsp-client-override 'css-ls
                           :add-on? t
                           :priority 0))
@@ -395,39 +389,30 @@
      (concat "\\." (regexp-opt my/astro-extensions) "\\'")
      filename))
   :config
-  (remhash 'typescript lsp--dependencies)
-  (lsp-dependency 'typescript '(:system "typescript-language-server.sh"))
-  (remhash 'astro-language-server lsp--dependencies)
-  (lsp-dependency 'astro-language-server '(:system "astro-language-server.sh"))
+  (remhash 'astro-ls lsp--dependencies)
   (my/lsp-client-override 'astro-ls
-                          :new-connection (lsp-stdio-connection `(,(lsp-package-path 'astro-language-server) "--stdio"))
+                          :new-connection (lsp-stdio-connection
+                                           (lambda ()
+                                                  (list (expand-file-name "node_modules/.bin/astro-ls"
+                                                                          (lsp-workspace-root))
+                                                        "--stdio")))
                           :add-on? t
                           :activation-fn #'my/lsp-astro-activate-p
                           :priority 0))
 
 (use-package lsp-tex
-  :custom
-  (lsp-clients-texlab-executable "latex-language-server.sh")
   :config
   (my/lsp-client-override 'texlab
                           :add-on? t))
 
-(use-package lsp-rust
-  :custom
-  (lsp-rust-analyzer-server-command
-   '("rust-language-server.sh"))
-  :config
-  (remhash 'rust-analyzer lsp--dependencies)
-  (lsp-dependency 'rust-analyzer '(:system "rust-language-server.sh")))
+(use-package lsp-rust)
 
 (use-package lsp-fortran
   :custom
-  (lsp-clients-fortls-executable "fortran-language-server.sh")
   (lsp-clients-fortls-args '("--lowercase_intrinsics")))
 
 (use-package lsp-ruff
   :custom
-  (lsp-ruff-server-command '("ruff.sh" "server"))
   (lsp-ruff-show-notifications "always")
   :config
   (my/lsp-client-override 'ruff
@@ -453,30 +438,18 @@
 (use-package lsp-pyright
   :ensure t
   :custom
-  (lsp-pyright-langserver-command "pyright.sh")
-  (lsp-pyright-langserver-command-args '("--stdio"))
   (lsp-pyright-diagnostic-mode  "workspace")
   (lsp-pyright-python-executable-cmd "python3")
   (lsp-pyright-auto-import-completions nil)
   (lsp-pyright-type-checking-mode "strict")
   :config
-  (remhash 'pyright lsp--dependencies)
-  (lsp-dependency 'pyright '(:system "pyright.sh"))
   (my/lsp-client-override 'pyright
                           :add-on? t
                           :priority -2))
 
-(use-package lsp-marksman
-  :custom
-  (lsp-marksman-server-command "marksman.sh")
-  :config
-  (remhash 'marksman lsp--dependencies)
-  (lsp-dependency 'marksman '(:system "marksman.sh")))
+(use-package lsp-marksman)
 
-(use-package lsp-json
-  :config
-  (remhash 'vscode-json-languageserver lsp--dependencies)
-  (lsp-dependency 'vscode-json-languageserver '(:system "json-language-server.sh")))
+(use-package lsp-json)
 
 ;; Org
 (use-package org
@@ -531,7 +504,7 @@
               lsp-pyright lsp-ui magit org-ref python-mode pyvenv
               reformatter rust-mode simple-httpd sqlformat
               symbol-overlay typescript-mode use-package web-mode
-              yaml-mode yasnippet org-modern mozc markdown-ts-mode
+              yaml-mode yasnippet org-modern mozc markdown-ts-modei))
  '(require-final-newline t)
  '(scroll-bar-mode nil)
  '(show-trailing-whitespace t)
