@@ -202,7 +202,6 @@
    lsp-javascript
    lsp-volar
    lsp-eslint
-   lsp-julia
    lsp-tex
    lsp-fortran
    lsp-ruff
@@ -214,7 +213,6 @@
   :hook
   (f90-mode . lsp)
   (rust-ts-mode . lsp)
-  (julia-ts-mode . lsp)
   (tex-mode . lsp)
   (python-ts-mode . lsp)
   (web-mode . lsp)
@@ -407,15 +405,6 @@
                           :activation-fn #'my/lsp-astro-activate-p
                           :priority 0))
 
-(use-package lsp-julia
-  :custom
-  (lsp-julia-default-environment "~/.julia/environments/v1.11")
-  :config
-  (my/lsp-client-override 'julia-ls
-                          :add-on? t
-                          :new-connection (lsp-stdio-connection
-                                                        (lambda () (append '("julia-language-server.sh") (cdr (lsp-julia--rls-command)))))))
-
 (use-package lsp-tex
   :custom
   (lsp-clients-texlab-executable "latex-language-server.sh")
@@ -538,11 +527,11 @@
  '(org-agenda-files nil)
  '(package-selected-packages
    '(cfn-mode company counsel flycheck flycheck-cfn ivy-bibtex js2-mode
-              julia-mode lsp-cfn lsp-ivy lsp-julia lsp-mode
+              lsp-cfn lsp-ivy lsp-mode
               lsp-pyright lsp-ui magit org-ref python-mode pyvenv
               reformatter rust-mode simple-httpd sqlformat
               symbol-overlay typescript-mode use-package web-mode
-              yaml-mode yasnippet org-modern mozc markdown-ts-mode julia-ts-mode))
+              yaml-mode yasnippet org-modern mozc markdown-ts-mode
  '(require-final-newline t)
  '(scroll-bar-mode nil)
  '(show-trailing-whitespace t)
