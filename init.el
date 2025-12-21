@@ -49,10 +49,6 @@
   :custom
   (treesit-font-lock-level 4))
 
-(use-package julia-ts-mode
-  :ensure t
-  :mode "\\.jl\\'")
-
 (use-package rust-ts-mode
   :ensure t
   :mode "\\.rs\\'")
@@ -504,7 +500,8 @@
               lsp-pyright lsp-ui magit org-ref python-mode pyvenv
               reformatter rust-mode simple-httpd sqlformat
               symbol-overlay typescript-mode use-package web-mode
-              yaml-mode yasnippet org-modern mozc markdown-ts-modei))
+              yaml-mode yasnippet org-modern mozc markdown-ts-mode
+              vterm nix-ts-mode))
  '(require-final-newline t)
  '(scroll-bar-mode nil)
  '(show-trailing-whitespace t)
