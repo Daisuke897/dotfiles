@@ -17,9 +17,6 @@
 (setq-default delete-trailing-lines t)
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 
-;; Get the path of the home directory.
-(defvar user-home-directory (file-name-as-directory (getenv "HOME")))
-
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
 (package-initialize)
@@ -133,6 +130,10 @@
   :ensure t)
 
 (use-package ivy
+  :preface
+  (defun swiper-at-point ()
+    (interactive)
+    (swiper (thing-at-point 'symbol t)))
   :ensure t
   :config
   (ivy-mode 1)
@@ -140,7 +141,8 @@
   (setq ivy-count-format "(%d/%d) ")
   (global-set-key "\C-s" 'swiper)
   (global-set-key (kbd "C-x C-f") 'counsel-find-file)
-  (global-set-key (kbd "C-c g") 'counsel-git))
+  (global-set-key (kbd "C-c g") 'counsel-git)
+  (global-set-key (kbd "C-M-s") #'swiper-at-point))
 
 (use-package counsel
   :ensure t
@@ -417,7 +419,7 @@
                           :initialization-options
                           (list :settings
                                 (list
-                                 :configuration (concat user-home-directory "dotfiles/ruff.toml")
+                                 :configuration (expand-file-name "~/dotfiles/ruff.toml")
                                  :configurationPreference "filesystemFirst"
                                  :logLevel lsp-ruff-log-level
                                  :showNotifications lsp-ruff-show-notifications
