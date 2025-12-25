@@ -44,7 +44,11 @@
 (use-package treesit
   :ensure nil
   :custom
-  (treesit-font-lock-level 4))
+  (treesit-font-lock-level 4)
+  :config
+  (when-let ((nix-grammar-path (getenv "TREE_SITTER_GRAMMAR_PATH")))
+    (setq treesit-extra-load-path (list nix-grammar-path))
+    (message "Tree-sitter grammars loaded from Nix: %s" nix-grammar-path)))
 
 (use-package rust-ts-mode
   :ensure t
