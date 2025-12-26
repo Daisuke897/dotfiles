@@ -19,6 +19,12 @@
           name = "merged-tree-sitter-grammars";
           paths = [
             (mkGrammar "python" pkgs-old.tree-sitter-grammars.tree-sitter-python)
+            (mkGrammar "yaml" pkgs.tree-sitter-grammars.tree-sitter-yaml)
+            (mkGrammar "bash" pkgs.tree-sitter-grammars.tree-sitter-bash)
+            (mkGrammar "typescript" pkgs.tree-sitter-grammars.tree-sitter-typescript)
+            (mkGrammar "markdown" pkgs.tree-sitter-grammars.tree-sitter-markdown)
+            (mkGrammar "json" pkgs.tree-sitter-grammars.tree-sitter-json)
+            (mkGrammar "css" pkgs.tree-sitter-grammars.tree-sitter-css)
             (mkGrammar "nix" pkgs.tree-sitter-grammars.tree-sitter-nix)
           ];
         };

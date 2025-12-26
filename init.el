@@ -47,8 +47,7 @@
   (treesit-font-lock-level 4)
   :config
   (when-let ((nix-grammar-path (getenv "TREE_SITTER_GRAMMAR_PATH")))
-    (setq treesit-extra-load-path (list nix-grammar-path))
-    (message "Tree-sitter grammars loaded from Nix: %s" nix-grammar-path)))
+    (setq treesit-extra-load-path (list nix-grammar-path))))
 
 (use-package rust-ts-mode
   :ensure t
@@ -493,6 +492,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(auth-source-save-behavior nil)
  '(custom-enabled-themes '(modus-operandi-tinted))
  '(gc-cons-threshold 100000000)
  '(indent-tabs-mode nil)
@@ -502,12 +502,11 @@
  '(org-agenda-files nil)
  '(package-selected-packages
    '(cfn-mode company counsel flycheck flycheck-cfn ivy-bibtex js2-mode
-              lsp-cfn lsp-ivy lsp-mode
-              lsp-pyright lsp-ui magit org-ref python-mode pyvenv
-              reformatter rust-mode simple-httpd sqlformat
-              symbol-overlay typescript-mode use-package web-mode
-              yaml-mode yasnippet org-modern mozc markdown-ts-mode
-              vterm nix-ts-mode))
+              lsp-cfn lsp-ivy lsp-mode lsp-pyright lsp-ui magit
+              org-ref python-mode pyvenv reformatter rust-mode
+              simple-httpd sqlformat symbol-overlay typescript-mode
+              use-package web-mode yaml-mode yasnippet org-modern mozc
+              markdown-ts-mode vterm nix-ts-mode))
  '(require-final-newline t)
  '(scroll-bar-mode nil)
  '(show-trailing-whitespace t)
