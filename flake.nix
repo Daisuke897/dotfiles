@@ -35,6 +35,8 @@
         devShells.default = pkgs.mkShell {
           buildInputs = [
             # LSP Servers
+            pkgs.typescript-language-server
+            pkgs.vue-language-server
             pkgs.vscode-langservers-extracted
             pkgs.yaml-language-server
             pkgs.texlab
@@ -49,7 +51,7 @@
 
           shellHook = ''
             export TREE_SITTER_GRAMMAR_PATH="${merged-grammars}/lib"
-            echo "Tree-sitter grammars aggregated at: $TREE_SITTER_GRAMMAR_PATH"
+            export VUE_LSP_PATH="${pkgs.vue-language-server}/lib"
           '';
         };
       };

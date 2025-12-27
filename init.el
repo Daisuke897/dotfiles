@@ -329,12 +329,6 @@
   :config
   (remhash 'ts-ls lsp--dependencies)
   (my/lsp-client-override 'ts-ls
-                          :new-connection
-                            (lsp-stdio-connection
-                             (lambda ()
-                               (list (expand-file-name "node_modules/.bin/typescript-language-server"
-                                                       (lsp-workspace-root))
-                                     "--stdio")))
                           :add-on? t
                           :activation-fn #'my/lsp-typescript-javascript-tsx-jsx-activate-p
                           :priority 0))
@@ -346,8 +340,25 @@
   :config
   (my/lsp-client-override 'vue-semantic-server
                           :add-on? t
-                          :new-connection (lsp-stdio-connection (lambda () '("vue-lsp" "--stdio")))
-                          :priority 0))
+                          :priority 0)
+  (let* ((plugin-name "@vue/typescript-plugin")
+         (new-plugin-path (file-name-concat (getenv "VUE_LSP_PATH")
+                                            "language-tools/packages/language-server/node_modules/@vue/typescript-plugin/"))
+
+         (new-plugin-def (list :name plugin-name
+                               :location new-plugin-path
+                               :languages (vector "typescript" "javascript" "vue")))
+
+         (current-plugins (if (boundp 'lsp-clients-typescript-plugins)
+                              (append lsp-clients-typescript-plugins nil) ;; ベクターをリストに変換
+                            nil))
+         (filtered-plugins (seq-filter
+                            (lambda (p) (not (string= (plist-get p :name) plugin-name)))
+                            current-plugins)))
+
+
+    (setq lsp-clients-typescript-plugins
+          (vconcat (vector new-plugin-def) (vconcat filtered-plugins)))))
 
 (use-package lsp-eslint
   :preface
