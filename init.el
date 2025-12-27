@@ -3,17 +3,16 @@
 ;;; my init file of Emacs
 ;;; Code:
 
-;; All files are opened in read-only mode.
 (add-hook 'find-file-hook (lambda () (setq buffer-read-only t)))
 
-(setq read-process-output-max (* 1024 1024)) ;; 1mb
+(global-display-line-numbers-mode 1)
 
-;; Default display settings in macOS
+(setq read-process-output-max (* 1024 1024))
+
 (when (eq system-type 'darwin)
   (set-face-attribute 'default nil :height 160)
   (set-frame-parameter nil 'alpha 85))
 
-;; Trim new lines after the final line.
 (setq-default delete-trailing-lines t)
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 
