@@ -1,4 +1,4 @@
-;;; early-init.el --- Early initialization -*- lexical-binding: t; -*-
+;;; early-init.el --- Early initialization
 ;;; Commentary:
 ;;; Code:
 
@@ -19,9 +19,9 @@
 ;;; UI elements (before frame creation)
 ;;; ------------------------------------------------------------
 
-(setq menu-bar-mode -1)
-(setq tool-bar-mode -1)
-(setq scroll-bar-mode -1)
+(menu-bar-mode -1)
+(tool-bar-mode -1)
+(scroll-bar-mode -1)
 (setq frame-inhibit-implied-resize t)
 
 ;;; ------------------------------------------------------------
