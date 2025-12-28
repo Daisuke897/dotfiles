@@ -6,33 +6,29 @@
 ;;; Package initialization
 ;;; ------------------------------------------------------------
 
-(custom-set-variables
- '(package-enable-at-startup nil))
+(setq package-enable-at-startup nil)
 
 ;;; ------------------------------------------------------------
 ;;; Garbage collection (startup optimization)
 ;;; ------------------------------------------------------------
 
-(custom-set-variables
- '(gc-cons-threshold most-positive-fixnum)
- '(gc-cons-percentage 0.6))
+(setq gc-cons-threshold most-positive-fixnum)
+(setq gc-cons-percentage 0.6)
 
 ;;; ------------------------------------------------------------
 ;;; UI elements (before frame creation)
 ;;; ------------------------------------------------------------
 
-(custom-set-variables
- '(menu-bar-mode -1)
- '(tool-bar-mode -1)
- '(scroll-bar-mode -1)
- '(frame-inhibit-implied-resize t))
+(setq menu-bar-mode -1)
+(setq tool-bar-mode -1)
+(setq scroll-bar-mode -1)
+(setq frame-inhibit-implied-resize t)
 
 ;;; ------------------------------------------------------------
 ;;; Native compilation (Emacs 29+)
 ;;; ------------------------------------------------------------
 
-(custom-set-variables
- '(native-comp-async-report-warnings-errors 'silent))
+(setq native-comp-async-report-warnings-errors 'silent)
 
 ;;; ------------------------------------------------------------
 ;;; End of early-init.el
