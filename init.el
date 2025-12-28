@@ -16,12 +16,19 @@
 (setq-default delete-trailing-lines t)
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 
+(column-number-mode 1)
+
+(set-language-environment "UTF-8")
+
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
 (package-initialize)
 
 (eval-when-compile
   (require 'use-package))
+
+;; Tab
+(tab-bar-mode)                          ; per project, workspace
 
 ;; straight.el
 (defvar bootstrap-version)
@@ -40,6 +47,7 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
+;; Treesit
 (use-package treesit
   :ensure nil
   :custom
@@ -48,6 +56,7 @@
   (when-let ((nix-grammar-path (getenv "TREE_SITTER_GRAMMAR_PATH")))
     (setq treesit-extra-load-path (list nix-grammar-path))))
 
+;; Mode
 (use-package rust-ts-mode
   :ensure t
   :mode "\\.rs\\'")
@@ -128,6 +137,7 @@
   (setq web-mode-style-padding 0)
   (setq web-mode-block-padding 0))
 
+;; Tool
 (use-package vterm
   :ensure t)
 
@@ -193,6 +203,25 @@
             '((lsp . ((next-checkers . (cfn-lint)))))))
   :hook
   (cfn-mode . my-cfn-mode-setup))
+
+(use-package dired-subtree
+  :ensure t
+  :after (dired)
+  :bind (:map dired-mode-map
+              ("i" . dired-subtree-insert)
+              (";" . dired-subtree-remove)
+              ("<tab>" . 'dired-subtree-toggle)))
+
+(use-package dired-sidebar
+  :bind (("C-x C-n" . dired-sidebar-toggle-sidebar))
+  :ensure t
+  :after (dired)
+  :commands (dired-sidebar-toggle-sidebar)
+  :hook
+  (dired-sidebar-mode . auto-revert-mode)
+  :custom
+  (dired-sidebar-use-term-integration t)
+  (dired-sidebar-theme 'nerd-icons))
 
 ;; Lsp
 (use-package lsp-mode
@@ -484,10 +513,7 @@
   :custom
   (sqlformat-command 'sql-formatter))
 
-(column-number-mode 1)
-
-(set-language-environment "UTF-8")
-
+;; Mozc
 (use-package mozc
   :ensure t
   :if (eq system-type 'gnu/linux)
