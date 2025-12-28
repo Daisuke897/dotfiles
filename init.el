@@ -534,7 +534,6 @@
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
  '(make-backup-files nil)
- '(menu-bar-mode nil)
  '(org-agenda-files nil)
  '(package-selected-packages
    '(cfn-mode company counsel flycheck flycheck-cfn ivy-bibtex js2-mode
@@ -544,15 +543,19 @@
               use-package web-mode yaml-mode yasnippet org-modern mozc
               markdown-ts-mode vterm nix-ts-mode))
  '(require-final-newline t)
- '(scroll-bar-mode nil)
- '(show-trailing-whitespace t)
- '(tool-bar-mode nil))
+ '(show-trailing-whitespace t))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (custom-set-variables
+             '(gc-cons-threshold (* 16 1024 1024))
+             '(gc-cons-percentage 0.1))))
 
 (provide 'init)
 ;;; init.el ends here
