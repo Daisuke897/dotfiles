@@ -553,9 +553,8 @@
 
 (add-hook 'emacs-startup-hook
           (lambda ()
-            (custom-set-variables
-             '(gc-cons-threshold (* 16 1024 1024))
-             '(gc-cons-percentage 0.1))))
+            (setq gc-cons-threshold (* 16 1024 1024)
+                  gc-cons-percentage 0.1)))
 
 (provide 'init)
 ;;; init.el ends here
