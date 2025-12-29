@@ -9,10 +9,6 @@
 
 (setq read-process-output-max (* 1024 1024))
 
-(when (eq system-type 'darwin)
-  (set-face-attribute 'default nil :height 160)
-  (set-frame-parameter nil 'alpha 85))
-
 (setq-default delete-trailing-lines t)
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 
@@ -26,6 +22,25 @@
 
 (eval-when-compile
   (require 'use-package))
+
+;; MacOS
+(when (eq system-type 'darwin)
+  (set-face-attribute 'default nil :height 160)
+  (set-frame-parameter nil 'alpha 85))
+
+;; Windows (WSL)
+(setq select-enable-clipboard t)
+
+(when (and (not (display-graphic-p))
+           (executable-find "clip.exe"))
+  (setq interprogram-cut-function
+        (lambda (text &optional push)
+          ;; Normalize LF and convert to UTF-16LE
+          (let* ((lf-text (replace-regexp-in-string "\r\n" "\n" text))
+                 (utf16-text (encode-coding-string lf-text 'utf-16-le))
+                 (proc (start-process "clip.exe" nil "clip.exe")))
+            (process-send-string proc utf16-text)
+            (process-send-eof proc)))))
 
 ;; Tab
 (tab-bar-mode)                          ; per project, workspace
