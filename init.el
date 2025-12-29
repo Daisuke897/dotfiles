@@ -26,7 +26,13 @@
 ;; MacOS
 (when (eq system-type 'darwin)
   (set-face-attribute 'default nil :height 160)
-  (set-frame-parameter nil 'alpha 85))
+  (set-frame-parameter nil 'alpha 85)
+
+  (setq interprogram-cut-function
+        (lambda (text &optional push)
+          (let ((proc (start-process "pbcopy" nil "pbcopy")))
+            (process-send-string proc text)
+            (process-send-eof proc)))))
 
 ;; Windows (WSL)
 (when (and (not (display-graphic-p))
