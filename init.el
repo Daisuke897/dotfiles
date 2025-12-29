@@ -169,26 +169,6 @@
   (if (eq system-type 'gnu/linux)
       (setq vterm-shell "/bin/bash")))
 
-;; (use-package ivy
-;;   :preface
-;;   (defun swiper-at-point ()
-;;     (interactive)
-;;     (swiper (thing-at-point 'symbol t)))
-;;   :ensure t
-;;   :config
-;;   (ivy-mode 1)
-;;   (setq ivy-use-virtual-buffers t)
-;;   (setq ivy-count-format "(%d/%d) ")
-;;   (global-set-key "\C-s" 'swiper)
-;;   (global-set-key (kbd "C-x C-f") 'counsel-find-file)
-;;   (global-set-key (kbd "C-c g") 'counsel-git)
-;;   (global-set-key (kbd "C-M-s") #'swiper-at-point))
-
-;; (use-package counsel
-;;   :ensure t
-;;   :config
-;;   (counsel-mode 1))
-
 (use-package consult
   :ensure t
   :bind
