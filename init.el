@@ -169,25 +169,57 @@
   (if (eq system-type 'gnu/linux)
       (setq vterm-shell "/bin/bash")))
 
-(use-package ivy
-  :preface
-  (defun swiper-at-point ()
-    (interactive)
-    (swiper (thing-at-point 'symbol t)))
-  :ensure t
-  :config
-  (ivy-mode 1)
-  (setq ivy-use-virtual-buffers t)
-  (setq ivy-count-format "(%d/%d) ")
-  (global-set-key "\C-s" 'swiper)
-  (global-set-key (kbd "C-x C-f") 'counsel-find-file)
-  (global-set-key (kbd "C-c g") 'counsel-git)
-  (global-set-key (kbd "C-M-s") #'swiper-at-point))
+;; (use-package ivy
+;;   :preface
+;;   (defun swiper-at-point ()
+;;     (interactive)
+;;     (swiper (thing-at-point 'symbol t)))
+;;   :ensure t
+;;   :config
+;;   (ivy-mode 1)
+;;   (setq ivy-use-virtual-buffers t)
+;;   (setq ivy-count-format "(%d/%d) ")
+;;   (global-set-key "\C-s" 'swiper)
+;;   (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+;;   (global-set-key (kbd "C-c g") 'counsel-git)
+;;   (global-set-key (kbd "C-M-s") #'swiper-at-point))
 
-(use-package counsel
+;; (use-package counsel
+;;   :ensure t
+;;   :config
+;;   (counsel-mode 1))
+
+(use-package consult
   :ensure t
+  :bind
+  (("C-x b" . consult-buffer)
+   ("C-s"   . consult-line)))
+
+(use-package vertico
+  :ensure t
+  :init
+  (vertico-mode)
+  :custom
+  (vertico-cycle t))
+
+(use-package marginalia
+  :ensure t
+  :init
+  (marginalia-mode)
   :config
-  (counsel-mode 1))
+  (setq marginalia-align 'right))
+
+(use-package orderless
+  :ensure t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides
+   '((file (styles basic partial-completion))))
+  :config
+  (setq orderless-matching-styles
+        '(orderless-literal
+          orderless-prefixes
+          orderless-regexp)))
 
 (use-package magit
   :ensure t)
@@ -564,12 +596,13 @@
  '(make-backup-files nil)
  '(org-agenda-files nil)
  '(package-selected-packages
-   '(cfn-mode company counsel flycheck flycheck-cfn ivy-bibtex js2-mode
-              lsp-cfn lsp-ivy lsp-mode lsp-pyright lsp-ui magit
+   '(cfn-mode company counsel flycheck flycheck-cfn js2-mode
+              lsp-cfn lsp-mode lsp-pyright lsp-ui magit
               org-ref python-mode pyvenv reformatter rust-mode
               simple-httpd sqlformat symbol-overlay typescript-mode
               use-package web-mode yaml-mode yasnippet org-modern mozc
-              markdown-ts-mode vterm nix-ts-mode))
+              markdown-ts-mode vterm nix-ts-mode
+              dired-sidebar dired-subtree))
  '(require-final-newline t)
  '(show-trailing-whitespace t))
 (custom-set-faces
