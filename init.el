@@ -26,26 +26,31 @@
 ;; MacOS
 (when (eq system-type 'darwin)
   (set-face-attribute 'default nil :height 160)
-  (set-frame-parameter nil 'alpha 85)
+  (set-frame-parameter nil 'alpha 85))
 
-  (setq interprogram-cut-function
-        (lambda (text &optional push)
-          (let ((proc (start-process "pbcopy" nil "pbcopy")))
-            (process-send-string proc text)
-            (process-send-eof proc)))))
+;; Clipboard integration (macOS / WSL)
+(defun my/send-to-clipboard (text)
+  "Send TEXT to the OS clipboard using the appropriate backend."
+  (cond
+   ;; macOS
+   ((eq system-type 'darwin)
+    (let ((proc (start-process "pbcopy" nil "pbcopy")))
+      (process-send-string proc text)
+      (process-send-eof proc)))
 
-;; Windows (WSL)
-(when (and (not (display-graphic-p))
-           (executable-find "clip.exe"))
-  (setq interprogram-cut-function
-        (lambda (text &optional push)
-          (let* ((lf-text (replace-regexp-in-string "\r\n" "\n" text))
-                 (utf16-text (encode-coding-string lf-text 'utf-16-le)))
-            (with-temp-buffer
-              (set-buffer-multibyte nil)
-              (insert utf16-text)
-              (call-process-region (point-min) (point-max)
-                                   "clip.exe" nil nil nil))))))
+   ;; WSL (TUI only)
+   ((and (not (display-graphic-p))
+         (executable-find "clip.exe"))
+    (let* ((lf-text (replace-regexp-in-string "\r\n" "\n" text))
+           (utf16-text (encode-coding-string lf-text 'utf-16-le)))
+      (with-temp-buffer
+        (set-buffer-multibyte nil)
+        (insert utf16-text)
+        (call-process-region (point-min) (point-max)
+                             "clip.exe" nil nil nil))))))
+
+;; Always sync kill-ring → OS clipboard
+(advice-add 'kill-new :after #'my/send-to-clipboard)
 
 ;; Tab
 (tab-bar-mode)                          ; per project, workspace
