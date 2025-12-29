@@ -164,7 +164,10 @@
 
 ;; Tool
 (use-package vterm
-  :ensure t)
+  :ensure t
+  :config
+  (if (eq system-type 'gnu/linux)
+      (setq vterm-shell "/bin/bash")))
 
 (use-package ivy
   :preface
