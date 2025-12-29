@@ -34,10 +34,10 @@
   (cond
    ;; macOS
    ((eq system-type 'darwin)
-    (let ((proc (start-process "pbcopy" nil "pbcopy")))
-      (process-send-string proc text)
-      (process-send-eof proc)))
-
+    (with-temp-buffer
+      (insert text)
+      (call-process-region (point-min) (point-max)
+                           "pbcopy" nil nil nil)))
    ;; WSL (TUI only)
    ((and (not (display-graphic-p))
          (executable-find "clip.exe"))
