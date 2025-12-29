@@ -221,11 +221,6 @@
   :config
   (setq flycheck-python-ruff-config (cons "~/dotfiles/ruff.toml" flycheck-python-ruff-config)))
 
-(use-package company
-  :ensure t
-  :config
-  (global-company-mode))
-
 (use-package yasnippet
   :ensure t
   :config
@@ -262,6 +257,20 @@
   :custom
   (dired-sidebar-use-term-integration t)
   (dired-sidebar-theme 'nerd-icons))
+
+(use-package corfu
+  :ensure t
+  :init
+  (global-corfu-mode)
+  :custom
+  (corfu-auto nil)
+  (corfu-cycle t)
+  (corfu-preselect 'prompt))
+
+(use-package corfu-terminal
+  :ensure t
+  :if (not (display-graphic-p))
+  :init (corfu-terminal-mode))
 
 ;; Lsp
 (use-package lsp-mode
