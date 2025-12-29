@@ -581,7 +581,8 @@
               org-ref python-mode pyvenv reformatter rust-mode
               simple-httpd sqlformat symbol-overlay typescript-mode
               use-package web-mode yaml-mode yasnippet org-modern mozc
-              markdown-ts-mode vterm nix-ts-mode
+              markdown-ts-mode vterm nix-ts-mode consult
+              vertico orderless marginalia
               dired-sidebar dired-subtree))
  '(require-final-newline t)
  '(show-trailing-whitespace t))
