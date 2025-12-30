@@ -87,6 +87,7 @@
   :mode "\\.rs\\'")
 
 (use-package python-ts-mode
+  :ensure nil
   :mode "\\.py\\'"
   :functions (lsp-feature? lsp-format-buffer lsp-organize-imports)
   :preface
@@ -108,6 +109,7 @@
   ("\\.yml\\'" . yaml-ts-mode))
 
 (use-package bash-ts-mode
+  :ensure nil
   :mode
   ("\\.sh\\'" . bash-ts-mode)
   :init
@@ -125,22 +127,27 @@
   ("\\.md\\'" . markdown-ts-mode))
 
 (use-package json-ts-mode
+  :ensure nil
   :mode
   ("\\.json\\'" . json-ts-mode))
 
 (use-package css-ts-mode
+  :ensure nil
   :mode
   ("\\.css\\'" . css-ts-mode))
 
 (use-package go-ts-mode
+  :ensure nil
   :mode
   ("\\.go\\'" . go-ts-mode))
 
 (use-package go-mod-ts-mode
+  :ensure nil
   :mode
   ("go\\.mod\\'" . go-mod-ts-mode))
 
 (use-package toml-ts-mode
+  :ensure nil
   :mode
   ("\\.toml\\'" . toml-ts-mode))
 
@@ -357,6 +364,7 @@
         new-client))))
 
 (use-package lsp-yaml
+  :ensure nil
   :custom
   (lsp-yaml-custom-tags (vector
                          "!And"
@@ -391,6 +399,7 @@
                           :add-on? t))
 
 (use-package lsp-javascript
+  :ensure nil
   :preface
   ;; Enable the js-ts LSP server when opening Vue.js fileis.
   (defconst my/js-ts-extensions
@@ -415,6 +424,7 @@
                           :priority 0))
 
 (use-package lsp-volar
+  :ensure nil
   :custom
   (lsp-volar-hybrid-mode t)
   (lsp-volar-take-over-mode nil)
@@ -442,6 +452,7 @@
           (vconcat (vector new-plugin-def) (vconcat filtered-plugins)))))
 
 (use-package lsp-eslint
+  :ensure nil
   :preface
   (defconst my/eslint-extensions
     '("ts" "js" "jsx" "tsx" "html" "vue" "svelte" "astro"))
@@ -467,12 +478,14 @@
                           :priority 0))
 
 (use-package lsp-css
+  :ensure nil
   :config
   (my/lsp-client-override 'css-ls
                           :add-on? t
                           :priority 0))
 
 (use-package lsp-astro
+  :ensure nil
   :preface
   (defconst my/astro-extensions
     '("astro"))
@@ -494,17 +507,21 @@
                           :priority 0))
 
 (use-package lsp-tex
+  :ensure nil
   :config
   (my/lsp-client-override 'texlab
                           :add-on? t))
 
-(use-package lsp-rust)
+(use-package lsp-rust
+  :ensure nil)
 
 (use-package lsp-fortran
+  :ensure nil
   :custom
   (lsp-clients-fortls-args '("--lowercase_intrinsics")))
 
 (use-package lsp-ruff
+  :ensure nil
   :custom
   (lsp-ruff-show-notifications "always")
   :config
@@ -540,25 +557,29 @@
                           :add-on? t
                           :priority -2))
 
-(use-package lsp-marksman)
+(use-package lsp-marksman
+  :ensure nil)
 
-(use-package lsp-json)
+(use-package lsp-json
+  :ensure nil)
 
 ;; Org
 (use-package org
+  :ensure nil
   :custom
-  (org-highlight-latex-and-related '(latex script entities)))
+  (org-highlight-latex-and-related '(latex script entities))
+  :config
+  ;; Active Babel languages
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((python . t)
+     (emacs-lisp . t))))
 
 (use-package org-modern
+  :ensure t
   :hook
   (org-mode . org-modern-mode)
   (org-agenda-finalize . org-modern-agenda))
-
-;; Active Babel languages
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '((python . t)
-   (emacs-lisp . t)))
 
 ;; Formatter
 (use-package sqlformat
@@ -574,8 +595,6 @@
   ;; "sudo apt install emacs-mozc-bin"
   (setq default-input-method "japanese-mozc"))
 
-(setq-default ispell-program-name "aspell")
-
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -588,15 +607,6 @@
  '(inhibit-startup-screen t)
  '(make-backup-files nil)
  '(org-agenda-files nil)
- '(package-selected-packages
-   '(cfn-mode company counsel flycheck flycheck-cfn js2-mode
-              lsp-cfn lsp-mode lsp-pyright lsp-ui magit
-              org-ref python-mode pyvenv reformatter rust-mode
-              simple-httpd sqlformat symbol-overlay typescript-mode
-              use-package web-mode yaml-mode yasnippet org-modern mozc
-              markdown-ts-mode vterm nix-ts-mode consult
-              vertico orderless marginalia
-              dired-sidebar dired-subtree))
  '(require-final-newline t)
  '(show-trailing-whitespace t))
 (custom-set-faces
