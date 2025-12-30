@@ -283,6 +283,10 @@
   :if (not (display-graphic-p))
   :init (corfu-terminal-mode))
 
+(use-package gcmh
+  :ensure t
+  :init (gcmh-mode 1))
+
 ;; Lsp
 (use-package lsp-mode
   :ensure t
