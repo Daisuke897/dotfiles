@@ -276,12 +276,29 @@
   :custom
   (corfu-auto nil)
   (corfu-cycle t)
-  (corfu-preselect 'prompt))
+  (corfu-preselect 'prompt)
+  (corfu-quit-no-match 'separator))
 
 (use-package corfu-terminal
   :ensure t
   :if (not (display-graphic-p))
   :init (corfu-terminal-mode))
+
+(use-package embark
+  :ensure t
+  :commands (embark-act embark-dwim embark-bindings)
+  :bind
+  (("C-c e" . embark-act)
+   ("C-c d" . embark-dwim)
+   ("C-h B" . embark-bindings))
+  :init
+  (setq prefix-help-command #'embark-prefix-help-command))
+
+(use-package embark-consult
+  :ensure t
+  :after (embark consult)
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
 
 (use-package gcmh
   :ensure t
