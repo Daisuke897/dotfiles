@@ -173,21 +173,8 @@
   :ensure t
   :bind
   (("C-x b" . consult-buffer)
-   ("C-s"   . consult-line)))
-
-(use-package vertico
-  :ensure t
-  :init
-  (vertico-mode)
-  :custom
-  (vertico-cycle t))
-
-(use-package marginalia
-  :ensure t
-  :init
-  (marginalia-mode)
-  :config
-  (setq marginalia-align 'right))
+   ("C-s"   . consult-line))
+  :commands (consult-line consult-buffer))
 
 (use-package orderless
   :ensure t
@@ -201,8 +188,25 @@
           orderless-prefixes
           orderless-regexp)))
 
+(use-package vertico
+  :ensure t
+  :after (orderless)
+  :init
+  (vertico-mode)
+  :custom
+  (vertico-cycle t))
+
+(use-package marginalia
+  :ensure t
+  :after (vertico)
+  :init
+  (marginalia-mode)
+  :config
+  (setq marginalia-align 'right))
+
 (use-package magit
-  :ensure t)
+  :ensure t
+  :commands (magit-status magit-blame))
 
 (use-package flycheck
   :ensure t
