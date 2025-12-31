@@ -622,7 +622,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
- '(custom-enabled-themes '(modus-operandi-tinted))
+ '(custom-enabled-themes '(modus-vivendi))
  '(gc-cons-threshold 100000000)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
