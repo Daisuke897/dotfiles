@@ -34,7 +34,9 @@
       {
         devShells.default = pkgs.mkShell {
           buildInputs = [
-            # LSP Servers
+            pkgs.bashInteractive
+            pkgs.bash-completion
+
             pkgs.typescript-language-server
             pkgs.vue-language-server
             pkgs.vscode-langservers-extracted
@@ -52,7 +54,16 @@
           shellHook = ''
             export TREE_SITTER_GRAMMAR_PATH="${merged-grammars}/lib"
             export VUE_LSP_PATH="${pkgs.vue-language-server}/lib"
-          '';
+          '' + (if pkgs.stdenv.isDarwin then ''
+          '' else ''
+            export PATH="${pkgs.bashInteractive}/bin:$PATH"
+            export SHELL="${pkgs.bashInteractive}/bin/bash"
+
+            # 対話シェルのときだけ bash-completion を読み込む
+            if [ -n "$PS1" ] && [ -f "${pkgs.bash-completion}/etc/profile.d/bash_completion.sh" ]; then
+              source "${pkgs.bash-completion}/etc/profile.d/bash_completion.sh"
+            fi
+          '' );
         };
       };
     };
