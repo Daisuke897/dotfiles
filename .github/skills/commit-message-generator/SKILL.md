@@ -6,6 +6,7 @@ description: Generate appropriate commit messages based on Git diffs
 ## Prerequisites
 - This Skill retrieves Git diffs and suggests meaningful commit messages
 - Message format should follow Conventional Commits
+- Commit messages should have a one-line Conventional Commits header, an optional blank second line, and from the third line onward include a bulleted list summarizing the changes
 - Commit messages should be in English
 - **Never perform Git commit or Git push**
 
