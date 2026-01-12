@@ -59,7 +59,9 @@
           shellHook = ''
             export TREE_SITTER_GRAMMAR_PATH="${merged-grammars}/lib"
             export VUE_LSP_PATH="${pkgs.vue-language-server}/lib"
-            export PATH="$(pwd)/.venv/bin:$PATH"
+            if [ -d "$(pwd)/.venv/bin" ]; then
+              export PATH="$(pwd)/.venv/bin:$PATH"
+            fi
           '' + (if pkgs.stdenv.isDarwin then ''
           '' else ''
             export PATH="${pkgs.bashInteractive}/bin:$PATH"
