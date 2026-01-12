@@ -48,6 +48,7 @@
             pkgs.fortls
             pkgs.ruff
             pkgs.pyright
+            pkgs.uv
             pkgs.marksman
             pkgs.taplo
             pkgs.dockerfile-language-server
@@ -58,6 +59,9 @@
           shellHook = ''
             export TREE_SITTER_GRAMMAR_PATH="${merged-grammars}/lib"
             export VUE_LSP_PATH="${pkgs.vue-language-server}/lib"
+            if [ -d "$(pwd)/.venv/bin" ]; then
+              export PATH="$(pwd)/.venv/bin:$PATH"
+            fi
           '' + (if pkgs.stdenv.isDarwin then ''
           '' else ''
             export PATH="${pkgs.bashInteractive}/bin:$PATH"

@@ -14,6 +14,20 @@ Enter the development shell with all language servers and tools:
 nix develop
 ```
 
+### Python Virtual Environment
+
+This project uses [uv](https://docs.astral.sh/uv/) for Python dependency management. When using [direnv](https://direnv.net/), the virtual environment is automatically synchronized:
+
+```bash
+direnv allow
+```
+
+If not using direnv, manually sync the Python environment:
+
+```bash
+uv sync
+```
+
 ## What's Included
 
 - **Emacs configuration** (`init.el`, `early-init.el`)
