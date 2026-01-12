@@ -49,7 +49,7 @@
             pkgs.ruff
             pkgs.pyright
             pkgs.uv
-            pkgs.marksman
+            pkgs-old.marksman
             pkgs.taplo
             pkgs.dockerfile-language-server
 
