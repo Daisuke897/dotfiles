@@ -300,6 +300,14 @@
   :if (not (display-graphic-p))
   :init (corfu-terminal-mode))
 
+(use-package cape
+  :ensure t
+  :bind ("C-c p" . cape-prefix-map)
+  :init
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-keyword))
+
 (use-package embark
   :ensure t
   :commands (embark-act embark-dwim embark-bindings)
