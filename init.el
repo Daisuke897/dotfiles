@@ -151,6 +151,12 @@
   :mode
   ("\\.toml\\'" . toml-ts-mode))
 
+(use-package dockerfile-mode
+  :ensure t
+  :mode
+  ("Dockerfile\'" . dockerfile-mode)
+  ("\\.dockerfile\\'" . dockerfile-mode))
+
 (use-package nix-ts-mode
   :ensure t
   :mode
@@ -337,6 +343,8 @@
   (python-ts-mode . lsp)
   (web-mode . lsp)
   (yaml-ts-mode . lsp)
+  (toml-ts-mode . lsp)
+  (dockerfile-mode . lsp)
   (typescript-ts-mode . lsp)
   (markdown-ts-mode . lsp)
   (json-ts-mode . lsp)
