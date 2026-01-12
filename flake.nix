@@ -28,6 +28,8 @@
             (mkGrammar "json" pkgs.tree-sitter-grammars.tree-sitter-json)
             (mkGrammar "css" pkgs.tree-sitter-grammars.tree-sitter-css)
             (mkGrammar "nix" pkgs.tree-sitter-grammars.tree-sitter-nix)
+            (mkGrammar "dockerfile" pkgs.tree-sitter-grammars.tree-sitter-dockerfile)
+            (mkGrammar "toml" pkgs.tree-sitter-grammars.tree-sitter-toml)
           ];
         };
       in
@@ -47,6 +49,8 @@
             pkgs.ruff
             pkgs.pyright
             pkgs.marksman
+            pkgs.taplo
+            pkgs.dockerfile-language-server
 
             merged-grammars
           ];
