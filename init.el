@@ -261,8 +261,9 @@
   :preface
   (defun my-cfn-mode-setup ()
     (flycheck-cfn-setup)
-      (setq flycheck-local-checkers
-            '((lsp . ((next-checkers . (cfn-lint)))))))
+    (setq flycheck-local-checkers
+          '((lsp . ((next-checkers . (cfn-lint))))))
+    (lsp))
   :hook
   (cfn-mode . my-cfn-mode-setup))
 
