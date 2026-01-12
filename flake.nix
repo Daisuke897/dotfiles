@@ -50,6 +50,7 @@
             pkgs.pyright
             pkgs.marksman
             pkgs.taplo
+            pkgs.dockerfile-language-server
 
             merged-grammars
           ];
