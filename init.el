@@ -269,7 +269,6 @@
 
 (use-package dired-subtree
   :ensure t
-  :after (dired)
   :bind (:map dired-mode-map
               ("i" . dired-subtree-insert)
               (";" . dired-subtree-remove)
@@ -278,7 +277,6 @@
 (use-package dired-sidebar
   :bind (("C-x C-n" . dired-sidebar-toggle-sidebar))
   :ensure t
-  :after (dired)
   :commands (dired-sidebar-toggle-sidebar)
   :hook
   (dired-sidebar-mode . auto-revert-mode)
