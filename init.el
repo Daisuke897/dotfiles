@@ -50,7 +50,7 @@
                              "clip.exe" nil nil nil))))))
 
 ;; Always sync kill-ring → OS clipboard
-(advice-add 'kill-new :after #'my/send-to-clipboard)
+(advice-add 'kill-new :after (lambda (text &rest _args) (my/send-to-clipboard text)))
 
 ;; Tab
 (tab-bar-mode)                          ; per project, workspace
