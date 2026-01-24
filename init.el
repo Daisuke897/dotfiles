@@ -227,6 +227,13 @@
   :config
   (setq marginalia-align 'right))
 
+(use-package which-key
+  :ensure t
+  :init
+  (which-key-mode)
+  :custom
+  (which-key-idle-delay 1.0))
+
 (use-package magit
   :ensure t
   :commands (magit-status magit-blame))
