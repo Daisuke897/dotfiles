@@ -37,7 +37,6 @@
         devShells.default = pkgs.mkShell {
           buildInputs = [
             pkgs.bashInteractive
-            pkgs.bash-completion
 
             pkgs.typescript-language-server
             pkgs.vue-language-server
@@ -62,16 +61,7 @@
             if [ -d "$(pwd)/.venv/bin" ]; then
               export PATH="$(pwd)/.venv/bin:$PATH"
             fi
-          '' + (if pkgs.stdenv.isDarwin then ''
-          '' else ''
-            export PATH="${pkgs.bashInteractive}/bin:$PATH"
-            export SHELL="${pkgs.bashInteractive}/bin/bash"
-
-            # 対話シェルのときだけ bash-completion を読み込む
-            if [ -n "$PS1" ] && [ -f "${pkgs.bash-completion}/etc/profile.d/bash_completion.sh" ]; then
-              source "${pkgs.bash-completion}/etc/profile.d/bash_completion.sh"
-            fi
-          '' );
+          '';
         };
       };
     };
