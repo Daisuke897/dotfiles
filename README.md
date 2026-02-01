@@ -50,6 +50,21 @@ uv sync
   - Tree-sitter grammars
   - Development tools (ruff, pyright, bash-completion)
 - **Ruff configuration** (`ruff.toml`)
+- **GitHub Copilot CLI skills** (`copilot/skills/`) - custom extensions for Copilot CLI
+  - AWS role assumption and SSO login
+  - Commit message generation
+  - Forgejo instance operations
+
+## GitHub Copilot CLI Skills
+
+Custom skills for the GitHub Copilot CLI are included in `copilot/skills/`. These are symlinked to `~/.copilot/skills` for seamless integration across machines.
+
+**Setup on new machines**:
+```bash
+ln -s ~/dotfiles/copilot/skills ~/.copilot/skills
+```
+
+See [`copilot/skills/README.md`](./copilot/skills/README.md) for skill details.
 
 ## LICENSE
 This program is licensed under the Apache License, Version 2.0.
