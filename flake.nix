@@ -3,11 +3,36 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixpkgs-old.url = "github:NixOS/nixpkgs/nixos-24.11";
     flake-parts.url = "github:hercules-ci/flake-parts";
+    home-manager = {
+      url = "github:nix-community/home-manager/release-25.11";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs@{ nixpkgs-old, flake-parts, ... }:
+    let
+      mkHome = system: homeDirectory:
+        inputs.home-manager.lib.homeManagerConfiguration {
+          pkgs = import inputs.nixpkgs { inherit system; };
+          modules = [
+            ({ pkgs, ... }: {
+              home.username = "daisuke";
+              home.homeDirectory = homeDirectory;
+              home.stateVersion = "25.11";
+              home.packages = with pkgs; [
+                forgejo-cli
+                nodejs
+              ];
+            })
+          ];
+        };
+    in
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" "aarch64-darwin" ];
+    flake.homeConfigurations = {
+      "daisuke@linux" = mkHome "x86_64-linux" "/home/daisuke";
+      "daisuke@mac" = mkHome "aarch64-darwin" "/Users/daisuke";
+    };
       perSystem = { config, pkgs, system, ... }:
       let
         pkgs-old = import nixpkgs-old { inherit system; };

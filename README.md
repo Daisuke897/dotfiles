@@ -14,6 +14,20 @@ Enter the development shell with all language servers and tools:
 nix develop
 ```
 
+### Home Manager (optional)
+
+Home Manager is available via this flake for adding user-level packages. Example:
+
+```bash
+home-manager switch --flake .#daisuke@linux
+```
+
+On macOS (ARM):
+
+```bash
+home-manager switch --flake .#daisuke@mac
+```
+
 ### Python Virtual Environment
 
 This project uses [uv](https://docs.astral.sh/uv/) for Python dependency management. When using [direnv](https://direnv.net/), the virtual environment is automatically synchronized:
