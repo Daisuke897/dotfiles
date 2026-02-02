@@ -1,0 +1,57 @@
+{
+  "lspServers": {
+    "typescript": {
+      "command": "typescript-language-server",
+      "args": [
+        "--stdio"
+      ],
+      "fileExtensions": {
+        ".ts": "typescript",
+        ".tsx": "typescript"
+      }
+    },
+    "ruff": {
+      "command": "ruff",
+      "args": [
+        "server"
+      ],
+      "fileExtensions": {
+        ".py": "python"
+      }
+    },
+    "pyright": {
+      "command": "pyright",
+      "args": [
+        "--stdio"
+      ],
+      "fileExtensions": {
+        ".py": "python"
+      }
+    },
+    "markdown": {
+      "command": "marksman",
+      "fileExtensions": {
+        ".md": "markdown"
+      }
+    },
+    "json": {
+      "command": "vscode-json-language-server",
+      "args": [
+        "--stdio"
+      ],
+      "fileExtensions": {
+        ".json": "json"
+      }
+    },
+    "yaml": {
+      "command": "yaml-language-server",
+      "args": [
+        "--stdio"
+      ],
+      "fileExtensions": {
+        ".yaml": "yaml",
+        ".yml": "yaml"
+      }
+    }
+  }
+}
