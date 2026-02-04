@@ -61,7 +61,6 @@
       {
         devShells.default = pkgs.mkShell {
           buildInputs = [
-            pkgs.bashInteractive
 
             pkgs.typescript-language-server
             pkgs.vue-language-server

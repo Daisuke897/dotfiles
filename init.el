@@ -548,7 +548,7 @@
      (concat "\\." (regexp-opt my/astro-extensions) "\\'")
      filename))
   :config
-  (remhash 'astro-ls lsp--dependencies)
+  (remhash 'astro-language-server lsp--dependencies)
   (my/lsp-client-override 'astro-ls
                           :new-connection (lsp-stdio-connection
                                            (lambda ()
