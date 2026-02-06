@@ -66,7 +66,8 @@
               license = licenses.gpl3Plus;
             };
           };
-          shellPackages = [
+
+          homePackages = [
             pkgs.typescript-language-server
             pkgs.vue-language-server
             pkgs.vscode-langservers-extracted
@@ -81,8 +82,6 @@
             pkgs.taplo
             pkgs.dockerfile-language-server
             mergedGrammars
-          ];
-          homePackages = shellPackages ++ [
             pkgs.forgejo-cli
             pkgs.nodejs
             cfnLint
@@ -92,7 +91,6 @@
         {
           pkgs = pkgs;
           mergedGrammars = mergedGrammars;
-          devShellPackages = shellPackages;
           homePackages = homePackages;
         };
       mkHome = system: homeDirectory:
@@ -123,22 +121,5 @@
         "daisuke@linux" = mkHome "x86_64-linux" "/home/daisuke";
         "daisuke@mac" = mkHome "aarch64-darwin" "/Users/daisuke";
       };
-      perSystem = { config, pkgs, system, ... }:
-        let
-          pkgs-old = import nixpkgs-old { inherit system; };
-          env = mkEnv { inherit pkgs pkgs-old; };
-        in
-        {
-          devShells.default = pkgs.mkShell {
-            buildInputs = env.devShellPackages;
-            shellHook = ''
-              export TREE_SITTER_GRAMMAR_PATH="${env.mergedGrammars}/lib"
-              export VUE_LSP_PATH="${env.pkgs.vue-language-server}/lib"
-              if [ -d "$(pwd)/.venv/bin" ]; then
-                export PATH="$(pwd)/.venv/bin:$PATH"
-              fi
-            '';
-          };
-        };
     };
 }
