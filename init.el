@@ -89,16 +89,21 @@
 (use-package python-ts-mode
   :ensure nil
   :mode "\\.py\\'"
-  :functions (lsp-feature? lsp-format-buffer lsp-organize-imports)
+  :functions (eglot-managed-p eglot-format-buffer eglot-format eglot-code-actions)
   :preface
   (defun my/python-mode-setup ()
     (add-hook 'before-save-hook
               (lambda ()
                 (when (and (eq major-mode 'python-ts-mode)
-                           (bound-and-true-p lsp-mode)
-                           (lsp-feature? "textDocument/codeAction"))
-                  (lsp-format-buffer)
-                  (lsp-organize-imports)))))
+                           (eglot-managed-p))
+                  (cond
+                   ((fboundp 'eglot-format-buffer)
+                    (eglot-format-buffer))
+                   ((fboundp 'eglot-format)
+                    (eglot-format)))
+                  (when (fboundp 'eglot-code-actions)
+                    (eglot-code-actions nil nil "source.organizeImports"))))
+              nil t))
   :hook
   (python-ts-mode . my/python-mode-setup))
 
@@ -238,39 +243,69 @@
   :ensure t
   :commands (magit-status magit-blame))
 
-(use-package flycheck
-  :ensure t
-  :custom
-  (flycheck-gfortran-language-standard "f2018")
-  :preface
-  (defvar-local flycheck-local-checkers nil)
-  (defun my/flycheck-checker-get(fn checker property)
-    (or (alist-get property (alist-get checker flycheck-local-checkers))
-        (funcall fn checker property)))
-  (advice-add 'flycheck-checker-get :around 'my/flycheck-checker-get)
-  (advice-add 'flycheck-eslint-config-exists-p :override (lambda() t))
-  :init
-  (global-flycheck-mode)
-  :functions flycheck-checker-get
-  :config
-  (setq flycheck-python-ruff-config (cons "~/dotfiles/ruff.toml" flycheck-python-ruff-config)))
+(use-package flymake
+  :ensure nil)
 
 (use-package yasnippet
   :ensure t
   :config
   (yas-global-mode 1))
 
-(use-package flycheck-cfn
-  :ensure t)
-
 (use-package cfn-mode
   :ensure t
   :preface
+  (defvar-local my/cfn-lint--proc nil)
+  (defun my/cfn-lint-flymake (report-fn &rest _args)
+    (unless (executable-find "cfn-lint")
+      (error "Cannot find cfn-lint"))
+    (when (process-live-p my/cfn-lint--proc)
+      (kill-process my/cfn-lint--proc))
+    (let* ((source (current-buffer))
+           (extension (file-name-extension (or (buffer-file-name source) "")))
+           (temp-file (make-temp-file "flymake-cfn-" nil
+                                      (and extension (concat "." extension)))))
+      (save-restriction
+        (widen)
+        (write-region nil nil temp-file nil 0))
+      (setq my/cfn-lint--proc
+            (make-process
+             :name "cfn-lint-flymake"
+             :noquery t
+             :connection-type 'pipe
+             :buffer (generate-new-buffer " *cfn-lint-flymake*")
+             :command (list "cfn-lint" "-f" "parseable" temp-file)
+             :sentinel
+             (lambda (proc _event)
+               (when (memq (process-status proc) '(exit signal))
+                 (unwind-protect
+                     (if (with-current-buffer source (eq proc my/cfn-lint--proc))
+                         (with-current-buffer (process-buffer proc)
+                           (goto-char (point-min))
+                           (let (diags)
+                             (while (re-search-forward
+                                     "^\\([^:]+\\):\\([0-9]+\\):\\([0-9]+\\):\\([^:]+\\):\\([^:]+\\):\\(.*\\)$"
+                                     nil t)
+                               (let* ((lnum (string-to-number (match-string 2)))
+                                      (col (string-to-number (match-string 3)))
+                                      (level (match-string 4))
+                                      (msg (match-string 6))
+                                      (pos (flymake-diag-region source lnum col))
+                                      (type (pcase level
+                                              ("warning" :warning)
+                                              ("info" :note)
+                                              (_ :error))))
+                                 (push (flymake-make-diagnostic
+                                        source (car pos) (cdr pos) type msg)
+                                       diags)))
+                             (funcall report-fn diags)))
+                       (flymake-log :warning "Canceling obsolete check %s" proc))
+                   (when (buffer-live-p (process-buffer proc))
+                     (kill-buffer (process-buffer proc)))
+                   (when (file-exists-p temp-file)
+                     (delete-file temp-file)))))))))
   (defun my-cfn-mode-setup ()
-    (flycheck-cfn-setup)
-    (setq flycheck-local-checkers
-          '((lsp . ((next-checkers . (cfn-lint))))))
-    (lsp))
+    (add-hook 'flymake-diagnostic-functions #'my/cfn-lint-flymake nil t)
+    (eglot-ensure))
   :hook
   (cfn-mode . my-cfn-mode-setup))
 
@@ -335,286 +370,156 @@
   :init (gcmh-mode 1))
 
 ;; Lsp
-(use-package lsp-mode
-  :ensure t
-  :after
-  (lsp-yaml
-   lsp-javascript
-   lsp-volar
-   lsp-eslint
-   lsp-tex
-   lsp-fortran
-   lsp-ruff
-   lsp-pyright
-   lsp-marksman
-   lsp-json
-   lsp-css
-   lsp-astro)
+(use-package eglot
+  :ensure nil
+  :preface
+  (defconst my/eglot-yaml-custom-tags
+    ["!And"
+     "!If"
+     "!Not"
+     "!Equals"
+     "!Or"
+     "!FindInMap"
+     "!Base64"
+     "!Cidr"
+     "!Ref"
+     "!Sub"
+     "!GetAtt"
+     "!GetAZs"
+     "!ImportValue"
+     "!Select"
+     "!Split"
+     "!Join"
+     "!And sequence"
+     "!If sequence"
+     "!Not sequence"
+     "!Equals sequence"
+     "!Or sequence"
+     "!FindInMap sequence"
+     "!Join sequence"
+     "!Sub sequence"
+     "!ImportValue sequence"
+     "!Select sequence"
+     "!Split sequence"])
+  (defconst my/eglot-ruff-ignore
+    ["ANN401" "BLE" "D" "E501" "EM" "PD002" "PD901"
+     "PLC01" "PLR09" "PLR2004" "PTH123" "TCH"])
+  (defconst my/eglot-ruff-select ["ALL"])
+  (defun my/eglot-project-root ()
+    (or (when-let ((project (project-current nil)))
+          (project-root project))
+        (locate-dominating-file default-directory ".git")
+        default-directory))
+  (defun my/eglot-node-bin (bin)
+    (let* ((root (my/eglot-project-root))
+           (local (and root (expand-file-name (concat "node_modules/.bin/" bin) root))))
+      (if (and local (file-executable-p local)) local bin)))
+  (defun my/eglot-rass (&rest servers)
+    (cons "rass"
+          (apply #'append
+                 (mapcar (lambda (server)
+                           (append '("--") server))
+                         servers))))
+  (defun my/eglot-typescript-server ()
+    (let* ((root (my/eglot-project-root))
+           (tsserver (and root (expand-file-name "node_modules/typescript/lib/tsserver.js" root)))
+           (cmd (list (my/eglot-node-bin "typescript-language-server") "--stdio")))
+      (if (and tsserver (file-exists-p tsserver))
+          (append cmd (list "--tsserver-path" tsserver))
+        cmd)))
+  (defun my/eglot-eslint-server ()
+    (list (my/eglot-node-bin "vscode-eslint-language-server") "--stdio"))
+  (defun my/eglot-vue-server ()
+    (list (my/eglot-node-bin "vue-language-server") "--stdio"))
+  (defun my/eglot-astro-server ()
+    (list (my/eglot-node-bin "astro-ls") "--stdio"))
+  (defun my/eglot-yaml-server ()
+    (list (my/eglot-node-bin "yaml-language-server") "--stdio"))
+  (defun my/eglot-json-server ()
+    (list (my/eglot-node-bin "vscode-json-language-server") "--stdio"))
+  (defun my/eglot-css-server ()
+    (list (my/eglot-node-bin "vscode-css-language-server") "--stdio"))
+  (defun my/eglot-dockerfile-server ()
+    (list (my/eglot-node-bin "docker-langserver") "--stdio"))
+  (defun my/eglot-toml-server ()
+    (list "taplo" "lsp" "stdio"))
+  (defun my/eglot-marksman-server ()
+    (list "marksman" "server"))
+  (defun my/eglot-texlab-server ()
+    (list "texlab"))
+  (defun my/eglot-rust-server ()
+    (list "rust-analyzer"))
+  (defun my/eglot-fortran-server ()
+    (list "fortls" "--lowercase_intrinsics"))
+  (defun my/eglot-ruff-server ()
+    (cond
+     ((executable-find "ruff") '("ruff" "server"))
+     ((executable-find "ruff-lsp") '("ruff-lsp" "--stdio"))
+     (t '("ruff" "server"))))
+  (defun my/eglot-python-server ()
+    (my/eglot-rass
+     (list "pyright-langserver" "--stdio")
+     (my/eglot-ruff-server)))
+  (defun my/eglot-typescript-rass ()
+    (my/eglot-rass
+     (my/eglot-typescript-server)
+     (my/eglot-eslint-server)))
+  (defun my/eglot-web-mode-server ()
+    (let ((ext (file-name-extension (or buffer-file-name ""))))
+      (cond
+       ((equal ext "vue")
+        (my/eglot-rass
+         (my/eglot-vue-server)
+         (my/eglot-typescript-server)
+         (my/eglot-eslint-server)))
+       ((equal ext "astro")
+        (my/eglot-rass
+         (my/eglot-astro-server)
+         (my/eglot-typescript-server)
+         (my/eglot-eslint-server)))
+       (t (my/eglot-typescript-rass)))))
   :hook
-  (f90-mode . lsp)
-  (rust-ts-mode . lsp)
-  (tex-mode . lsp)
-  (python-ts-mode . lsp)
-  (web-mode . lsp)
-  (yaml-ts-mode . lsp)
-  (toml-ts-mode . lsp)
-  (dockerfile-mode . lsp)
-  (typescript-ts-mode . lsp)
-  (markdown-ts-mode . lsp)
-  (json-ts-mode . lsp)
-  (css-ts-mode . lsp)
+  ((f90-mode . eglot-ensure)
+   (rust-ts-mode . eglot-ensure)
+   (tex-mode . eglot-ensure)
+   (python-ts-mode . eglot-ensure)
+   (web-mode . eglot-ensure)
+   (yaml-ts-mode . eglot-ensure)
+   (toml-ts-mode . eglot-ensure)
+   (dockerfile-mode . eglot-ensure)
+   (typescript-ts-mode . eglot-ensure)
+   (tsx-ts-mode . eglot-ensure)
+   (markdown-ts-mode . eglot-ensure)
+   (json-ts-mode . eglot-ensure)
+   (css-ts-mode . eglot-ensure))
   :config
-  (push 'semgrep-ls lsp-disabled-clients))
-
-(defun my/lsp-client-override (id &rest overrides)
-  "Create a new lsp client based on ID and apply OVERRIDES."
-  (let ((base (gethash id lsp-clients)))
-    (when base
-      (let ((new-client
-             (make-lsp--client
-              :language-id (lsp--client-language-id base)
-              :add-on? (or (plist-get overrides :add-on?)
-                           (lsp--client-add-on? base))
-              :new-connection (or (plist-get overrides :new-connection)
-                                  (lsp--client-new-connection base))
-              :ignore-regexps (lsp--client-ignore-regexps base)
-              :ignore-messages (lsp--client-ignore-messages base)
-              :notification-handlers (lsp--client-notification-handlers base)
-              :request-handlers (lsp--client-request-handlers base)
-              :response-handlers (lsp--client-response-handlers base)
-              :prefix-function (lsp--client-prefix-function base)
-              :uri-handlers (lsp--client-uri-handlers base)
-              :action-handlers (lsp--client-action-handlers base)
-              :action-filter (lsp--client-action-filter base)
-              :major-modes (lsp--client-major-modes base)
-              :activation-fn (or (plist-get overrides :activation-fn)
-                                 (lsp--client-activation-fn base))
-              :priority (or (plist-get overrides :priority)
-                            (lsp--client-priority base))
-              :server-id (lsp--client-server-id base)
-              :multi-root (lsp--client-multi-root base)
-              :initialization-options
-              (or (plist-get overrides :initialization-options)
-                  (lsp--client-initialization-options base))
-              :semantic-tokens-faces-overrides
-              (lsp--client-semantic-tokens-faces-overrides base)
-              :custom-capabilities (lsp--client-custom-capabilities base)
-              :library-folders-fn (lsp--client-library-folders-fn base)
-              :before-file-open-fn (lsp--client-before-file-open-fn base)
-              :initialized-fn (lsp--client-initialized-fn base)
-              :remote? (lsp--client-remote? base)
-              :completion-in-comments? (lsp--client-completion-in-comments? base)
-              :path->uri-fn (lsp--client-path->uri-fn base)
-              :uri->path-fn (lsp--client-uri->path-fn base)
-              :environment-fn (lsp--client-environment-fn base)
-              :after-open-fn (lsp--client-after-open-fn base)
-              :async-request-handlers (lsp--client-async-request-handlers base)
-              :download-server-fn (lsp--client-download-server-fn base)
-              :download-in-progress? (lsp--client-download-in-progress? base)
-              :buffers (lsp--client-buffers base)
-              :synchronize-sections (lsp--client-synchronize-sections base))))
-        (puthash id new-client lsp-clients)
-        new-client))))
-
-(use-package lsp-yaml
-  :ensure nil
-  :custom
-  (lsp-yaml-custom-tags (vector
-                         "!And"
-                         "!If"
-                         "!Not"
-                         "!Equals"
-                         "!Or"
-                         "!FindInMap"
-                         "!Base64"
-                         "!Cidr"
-                         "!Ref"
-                         "!Sub"
-                         "!GetAtt"
-                         "!GetAZs"
-                         "!ImportValue"
-                         "!Select"
-                         "!Split"
-                         "!Join"
-                         "!And sequence"
-                         "!If sequence"
-                         "!Not sequence"
-                         "!Equals sequence"
-                         "!Or sequence"
-                         "!FindInMap sequence"
-                         "!Join sequence"
-                         "!Sub sequence"
-                         "!ImportValue sequence"
-                         "!Select sequence"
-                         "!Split sequence"))
-  :config
-  (my/lsp-client-override 'yamlls
-                          :add-on? t))
-
-(use-package lsp-javascript
-  :ensure nil
-  :preface
-  ;; Enable the js-ts LSP server when opening Vue.js fileis.
-  (defconst my/js-ts-extensions
-      '("cjs" "mjs" "js" "jsx" "ts" "tsx" "vue" "astro"))
-  (defun my/lsp-typescript-javascript-tsx-jsx-activate-p (filename &optional _)
-    "Check if the js-ts lsp server should be enabled based on FILENAME."
-    (or (string-match-p
-         (concat "\\." (regexp-opt my/js-ts-extensions) "\\'")
-         filename)
-        (and (derived-mode-p 'js-mode 'js-ts-mode 'typescript-mode 'typescript-ts-mode)
-             (not (derived-mode-p 'json-mode)))))
-  :custom
-  (lsp-clients-typescript-prefer-use-project-ts-server t)
-  ;; Disable format for ts-ls.
-  (lsp-javascript-format-enable t)
-  (lsp-typescript-format-enable t)
-  :config
-  (remhash 'ts-ls lsp--dependencies)
-  (my/lsp-client-override 'ts-ls
-                          :add-on? t
-                          :activation-fn #'my/lsp-typescript-javascript-tsx-jsx-activate-p
-                          :priority 0))
-
-(use-package lsp-volar
-  :ensure nil
-  :custom
-  (lsp-volar-hybrid-mode t)
-  (lsp-volar-take-over-mode nil)
-  :config
-  (my/lsp-client-override 'vue-semantic-server
-                          :add-on? t
-                          :priority 0)
-  (let* ((plugin-name "@vue/typescript-plugin")
-         (new-plugin-path (file-name-concat (getenv "VUE_LSP_PATH")
-                                            "language-tools/packages/language-server/node_modules/@vue/typescript-plugin/"))
-
-         (new-plugin-def (list :name plugin-name
-                               :location new-plugin-path
-                               :languages (vector "typescript" "javascript" "vue")))
-
-         (current-plugins (if (boundp 'lsp-clients-typescript-plugins)
-                              (append lsp-clients-typescript-plugins nil) ;; ベクターをリストに変換
-                            nil))
-         (filtered-plugins (seq-filter
-                            (lambda (p) (not (string= (plist-get p :name) plugin-name)))
-                            current-plugins)))
-
-
-    (setq lsp-clients-typescript-plugins
-          (vconcat (vector new-plugin-def) (vconcat filtered-plugins)))))
-
-(use-package lsp-eslint
-  :ensure nil
-  :preface
-  (defconst my/eslint-extensions
-    '("ts" "js" "jsx" "tsx" "html" "vue" "svelte" "astro"))
-  (defun my/lsp-eslint-activate-p (filename &optional _)
-    (when lsp-eslint-enable
-      (or (string-match-p
-           (concat "\\." (regexp-opt my/eslint-extensions) "\\'")
-           filename)
-          (and (derived-mode-p 'js-mode 'js2-mode 'typescript-mode 'typescript-ts-mode 'html-mode 'svelte-mode)
-               (not (string-match-p "\\.json\\'" filename))))))
-  :custom
-  (lsp-eslint-format t)
-  :config
-  (my/lsp-client-override 'eslint
-                          :new-connection
-                          (lsp-stdio-connection
-                             (lambda ()
-                               (list (expand-file-name "node_modules/.bin/vscode-eslint-language-server"
-                                                       (lsp-workspace-root))
-                                     "--stdio")))
-                          :add-on? t
-                          :activation-fn #'my/lsp-eslint-activate-p
-                          :priority 0))
-
-(use-package lsp-css
-  :ensure nil
-  :config
-  (my/lsp-client-override 'css-ls
-                          :add-on? t
-                          :priority 0))
-
-(use-package lsp-astro
-  :ensure nil
-  :preface
-  (defconst my/astro-extensions
-    '("astro"))
-  (defun my/lsp-astro-activate-p (filename &optional _)
-    "Check if the astro lsp server should be enabled based on FILENAME."
-    (string-match-p
-     (concat "\\." (regexp-opt my/astro-extensions) "\\'")
-     filename))
-  :config
-  (remhash 'astro-language-server lsp--dependencies)
-  (my/lsp-client-override 'astro-ls
-                          :new-connection (lsp-stdio-connection
-                                           (lambda ()
-                                                  (list (expand-file-name "node_modules/.bin/astro-ls"
-                                                                          (lsp-workspace-root))
-                                                        "--stdio")))
-                          :add-on? t
-                          :activation-fn #'my/lsp-astro-activate-p
-                          :priority 0))
-
-(use-package lsp-tex
-  :ensure nil
-  :config
-  (my/lsp-client-override 'texlab
-                          :add-on? t))
-
-(use-package lsp-rust
-  :ensure nil)
-
-(use-package lsp-fortran
-  :ensure nil
-  :custom
-  (lsp-clients-fortls-args '("--lowercase_intrinsics")))
-
-(use-package lsp-ruff
-  :ensure nil
-  :custom
-  (lsp-ruff-show-notifications "always")
-  :config
-  (my/lsp-client-override 'ruff
-                          :add-on? t
-                          :priority -2
-                          :initialization-options
-                          (list :settings
-                                (list
-                                 :configuration (expand-file-name "~/dotfiles/ruff.toml")
-                                 :configurationPreference "filesystemFirst"
-                                 :logLevel lsp-ruff-log-level
-                                 :showNotifications lsp-ruff-show-notifications
-                                 :organizeImports (lsp-json-bool lsp-ruff-advertize-organize-imports)
-                                 :fixAll (lsp-json-bool lsp-ruff-advertize-fix-all)
-                                 :importStrategy lsp-ruff-import-strategy
-                                 :lint `(:ignore ,(vector "ANN401" "BLE" "D" "E501" "EM" "PD002" "PD901"
-                                                          "PLC01" "PLR09" "PLR2004" "PTH123" "TCH")
-                                                 :select ,(vector "ALL"))
-                                 :lineLength 320
-                                 :format (list :preview (lsp-json-bool t))))))
-
-
-(use-package lsp-pyright
-  :ensure t
-  :custom
-  (lsp-pyright-diagnostic-mode  "workspace")
-  (lsp-pyright-python-executable-cmd "python3")
-  (lsp-pyright-auto-import-completions nil)
-  (lsp-pyright-type-checking-mode "strict")
-  :config
-  (my/lsp-client-override 'pyright
-                          :add-on? t
-                          :priority -2))
-
-(use-package lsp-marksman
-  :ensure nil)
-
-(use-package lsp-json
-  :ensure nil)
+  (setq eglot-workspace-configuration
+        `((:yaml . (:customTags ,my/eglot-yaml-custom-tags))
+          (:python . (:analysis (:diagnosticMode "workspace"
+                                :typeCheckingMode "strict"
+                                :autoImportCompletions :json-false)))
+          (:ruff . (:configuration ,(expand-file-name "~/dotfiles/ruff.toml")
+                   :configurationPreference "filesystemFirst"
+                   :showNotifications "always"
+                   :lint (:ignore ,my/eglot-ruff-ignore
+                          :select ,my/eglot-ruff-select)
+                   :lineLength 320
+                   :format (:preview t)))
+          (:eslint . (:format (:enable t)))))
+  (dolist (entry
+           '((python-ts-mode . my/eglot-python-server)
+             ((typescript-ts-mode tsx-ts-mode) . my/eglot-typescript-rass)
+             (web-mode . my/eglot-web-mode-server)
+             ((yaml-ts-mode cfn-mode) . my/eglot-yaml-server)
+             (toml-ts-mode . my/eglot-toml-server)
+             (dockerfile-mode . my/eglot-dockerfile-server)
+             (markdown-ts-mode . my/eglot-marksman-server)
+             (json-ts-mode . my/eglot-json-server)
+             (css-ts-mode . my/eglot-css-server)
+             (tex-mode . my/eglot-texlab-server)
+             (rust-ts-mode . my/eglot-rust-server)
+             (f90-mode . my/eglot-fortran-server)))
+    (add-to-list 'eglot-server-programs entry)))
 
 ;; Org
 (use-package org
