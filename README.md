@@ -8,15 +8,7 @@ Personal configuration files for development environment and Emacs.
 
 ## Usage
 
-Enter the development shell with all language servers and tools:
-
-```bash
-nix develop
-```
-
-### Home Manager (optional)
-
-Home Manager is available via this flake for adding user-level packages. Example:
+Apply the Home Manager configuration to install all shared tooling:
 
 ```bash
 home-manager switch --flake .#daisuke@linux
@@ -28,11 +20,13 @@ On macOS (ARM):
 home-manager switch --flake .#daisuke@mac
 ```
 
-The Home Manager configuration now installs the same language servers, formatters, `uv`, `ruff`, and helper tools that the dev shell provides, plus `cfn-lint`, `rassumfrassum`, and the merged tree-sitter grammars needed by Emacs. It also exports `TREE_SITTER_GRAMMAR_PATH` and `VUE_LSP_PATH` so Emacs launched via `bin/em` picks up those binaries without the need to run `nix develop`.
+### Home Manager config
+
+The Home Manager configuration now installs the same language servers, formatters, `uv`, `ruff`, and helper tools that the dev shell used to provide, plus `cfn-lint`, `rassumfrassum`, and the merged tree-sitter grammars needed by Emacs. It also exports `TREE_SITTER_GRAMMAR_PATH` and `VUE_LSP_PATH` so Emacs picks up those binaries without needing `nix develop`.
 
 ### Emacs launcher
 
-`bin/em` still wraps `emacs` with `direnv exec` so project-local `.venv/bin` directories take precedence, but you can launch it without entering the dev shell because Home Manager already provides the shared language servers and LSP tooling.
+Launch Emacs normally; project-local `.venv/bin` directories still take precedence whenever you start Emacs from a shell inside the project directory because `direnv` is applied there.
 
 ### Python Virtual Environment
 
