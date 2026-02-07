@@ -372,6 +372,7 @@
 ;; Lsp
 (use-package eglot
   :ensure nil
+  :demand t
   :preface
   (defconst my/eglot-yaml-custom-tags
     ["!And"
@@ -405,6 +406,19 @@
     ["ANN401" "BLE" "D" "E501" "EM" "PD002" "PD901"
      "PLC01" "PLR09" "PLR2004" "PTH123" "TCH"])
   (defconst my/eglot-ruff-select ["ALL"])
+  (defconst my/eglot-workspace-configuration
+    `((:yaml . (:customTags ,my/eglot-yaml-custom-tags))
+      (:python . (:analysis (:diagnosticMode "workspace"
+                            :typeCheckingMode "strict"
+                            :autoImportCompletions :json-false)))
+      (:ruff . (:configuration ,(expand-file-name "~/dotfiles/ruff.toml")
+               :configurationPreference "filesystemFirst"
+               :showNotifications "always"
+               :lint (:ignore ,my/eglot-ruff-ignore
+                      :select ,my/eglot-ruff-select)
+               :lineLength 320
+               :format (:preview t)))
+      (:eslint . (:format (:enable t)))))
   (defun my/eglot-project-root ()
     (or (when-let ((project (project-current nil)))
           (project-root project))
@@ -433,38 +447,35 @@
     (list (my/eglot-node-bin "vue-language-server") "--stdio"))
   (defun my/eglot-astro-server ()
     (list (my/eglot-node-bin "astro-ls") "--stdio"))
-  (defun my/eglot-yaml-server ()
+  (defun my/eglot-yaml-server (&rest _args)
     (list (my/eglot-node-bin "yaml-language-server") "--stdio"))
-  (defun my/eglot-json-server ()
+  (defun my/eglot-json-server (&rest _args)
     (list (my/eglot-node-bin "vscode-json-language-server") "--stdio"))
-  (defun my/eglot-css-server ()
+  (defun my/eglot-css-server (&rest _args)
     (list (my/eglot-node-bin "vscode-css-language-server") "--stdio"))
-  (defun my/eglot-dockerfile-server ()
+  (defun my/eglot-dockerfile-server (&rest _args)
     (list (my/eglot-node-bin "docker-langserver") "--stdio"))
-  (defun my/eglot-toml-server ()
+  (defun my/eglot-toml-server (&rest _args)
     (list "taplo" "lsp" "stdio"))
-  (defun my/eglot-marksman-server ()
+  (defun my/eglot-marksman-server (&rest _args)
     (list "marksman" "server"))
-  (defun my/eglot-texlab-server ()
+  (defun my/eglot-texlab-server (&rest _args)
     (list "texlab"))
-  (defun my/eglot-rust-server ()
+  (defun my/eglot-rust-server (&rest _args)
     (list "rust-analyzer"))
-  (defun my/eglot-fortran-server ()
+  (defun my/eglot-fortran-server (&rest _args)
     (list "fortls" "--lowercase_intrinsics"))
   (defun my/eglot-ruff-server ()
-    (cond
-     ((executable-find "ruff") '("ruff" "server"))
-     ((executable-find "ruff-lsp") '("ruff-lsp" "--stdio"))
-     (t '("ruff" "server"))))
-  (defun my/eglot-python-server ()
+    (list "ruff" "server"))
+  (defun my/eglot-python-server (&rest _args)
     (my/eglot-rass
      (list "pyright-langserver" "--stdio")
      (my/eglot-ruff-server)))
-  (defun my/eglot-typescript-rass ()
+  (defun my/eglot-typescript-rass (&rest _args)
     (my/eglot-rass
      (my/eglot-typescript-server)
      (my/eglot-eslint-server)))
-  (defun my/eglot-web-mode-server ()
+  (defun my/eglot-web-mode-server (&rest _args)
     (let ((ext (file-name-extension (or buffer-file-name ""))))
       (cond
        ((equal ext "vue")
@@ -478,6 +489,8 @@
          (my/eglot-typescript-server)
          (my/eglot-eslint-server)))
        (t (my/eglot-typescript-rass)))))
+  :init
+  (setq eglot-workspace-configuration my/eglot-workspace-configuration)
   :hook
   ((f90-mode . eglot-ensure)
    (rust-ts-mode . eglot-ensure)
@@ -493,19 +506,6 @@
    (json-ts-mode . eglot-ensure)
    (css-ts-mode . eglot-ensure))
   :config
-  (setq eglot-workspace-configuration
-        `((:yaml . (:customTags ,my/eglot-yaml-custom-tags))
-          (:python . (:analysis (:diagnosticMode "workspace"
-                                :typeCheckingMode "strict"
-                                :autoImportCompletions :json-false)))
-          (:ruff . (:configuration ,(expand-file-name "~/dotfiles/ruff.toml")
-                   :configurationPreference "filesystemFirst"
-                   :showNotifications "always"
-                   :lint (:ignore ,my/eglot-ruff-ignore
-                          :select ,my/eglot-ruff-select)
-                   :lineLength 320
-                   :format (:preview t)))
-          (:eslint . (:format (:enable t)))))
   (dolist (entry
            '((python-ts-mode . my/eglot-python-server)
              ((typescript-ts-mode tsx-ts-mode) . my/eglot-typescript-rass)
