@@ -26,17 +26,11 @@ The Home Manager configuration now installs the same language servers, formatter
 
 ### Emacs launcher
 
-Launch Emacs normally; project-local `.venv/bin` directories still take precedence whenever you start Emacs from a shell inside the project directory because `direnv` is applied there.
+Launch Emacs normally; project-local `.venv/bin` directories still take precedence when you start Emacs from a shell inside the project directory.
 
 ### Python Virtual Environment
 
-This project uses [uv](https://docs.astral.sh/uv/) for Python dependency management. When using [direnv](https://direnv.net/), the virtual environment is automatically synchronized:
-
-```bash
-direnv allow
-```
-
-If not using direnv, manually sync the Python environment:
+This project uses [uv](https://docs.astral.sh/uv/) for Python dependency management. Synchronize the Python virtual environment with:
 
 ```bash
 uv sync
