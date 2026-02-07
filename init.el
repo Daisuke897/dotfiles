@@ -469,7 +469,7 @@
     (list "ruff" "server"))
   (defun my/eglot-python-server (&rest _args)
     (my/eglot-rass
-     (list "pyright-langserver" "--stdio")
+     (list "ty" "server")
      (my/eglot-ruff-server)))
   (defun my/eglot-typescript-rass (&rest _args)
     (my/eglot-rass

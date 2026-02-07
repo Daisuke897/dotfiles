@@ -76,7 +76,7 @@
             pkgs.rust-analyzer
             pkgs.fortls
             pkgs.ruff
-            pkgs.pyright
+            pkgs.ty
             pkgs.uv
             pkgs-old.marksman
             pkgs.taplo
