@@ -402,23 +402,15 @@
      "!ImportValue sequence"
      "!Select sequence"
      "!Split sequence"])
-  (defconst my/eglot-ruff-ignore
-    ["ANN401" "BLE" "D" "E501" "EM" "PD002" "PD901"
-     "PLC01" "PLR09" "PLR2004" "PTH123" "TCH"])
-  (defconst my/eglot-ruff-select ["ALL"])
   (defconst my/eglot-workspace-configuration
     `((:yaml . (:customTags ,my/eglot-yaml-custom-tags))
-      (:python . (:analysis (:diagnosticMode "workspace"
-                            :typeCheckingMode "strict"
-                            :autoImportCompletions :json-false)))
+      (:ty . (:diagnosticMode "workspace"))
       (:ruff . (:configuration ,(expand-file-name "~/dotfiles/ruff.toml")
-               :configurationPreference "filesystemFirst"
-               :showNotifications "always"
-               :lint (:ignore ,my/eglot-ruff-ignore
-                      :select ,my/eglot-ruff-select)
-               :lineLength 320
-               :format (:preview t)))
+                :configurationPreference "filesystemFirst"
+                :format (:preview t)))
       (:eslint . (:format (:enable t)))))
+  (when (boundp 'project-vc-extra-root-markers)
+    (add-to-list 'project-vc-extra-root-markers "pyproject.toml"))
   (defun my/eglot-project-root ()
     (or (when-let ((project (project-current nil)))
           (project-root project))
@@ -467,9 +459,11 @@
     (list "fortls" "--lowercase_intrinsics"))
   (defun my/eglot-ruff-server ()
     (list "ruff" "server"))
+  (defun my/eglot-ty-server ()
+    (list "ty" "server"))
   (defun my/eglot-python-server (&rest _args)
     (my/eglot-rass
-     (list "ty" "server")
+     (my/eglot-ty-server)
      (my/eglot-ruff-server)))
   (defun my/eglot-typescript-rass (&rest _args)
     (my/eglot-rass
