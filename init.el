@@ -182,7 +182,9 @@
 
 ;; Tool
 (use-package vterm
-  :ensure t)
+  :ensure t
+  :custom
+  (vterm-max-scrollback 10000))
 
 (use-package eat
   :straight
