@@ -2,3 +2,4 @@ images
 *~
 .direnv/
 .venv/
+.DS_Store
