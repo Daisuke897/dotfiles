@@ -420,8 +420,15 @@
         default-directory))
   (defun my/eglot-node-bin (bin)
     (let* ((root (my/eglot-project-root))
+           (is-remote (file-remote-p root))
+           ;; Strip TRAMP prefix if present (e.g., /ssh:root@localhost#2222:/app)
+           (root (if is-remote (file-local-name root) root))
            (local (and root (expand-file-name (concat "node_modules/.bin/" bin) root))))
-      (if (and local (file-executable-p local)) local bin)))
+      ;; For remote connections, always return the full path (will be verified in container)
+      ;; For local connections, check if executable locally first
+      (if is-remote
+          local
+        (if (and local (file-executable-p local)) local bin))))
   (defun my/eglot-rass (&rest servers)
     (cons "rass"
           (apply #'append
@@ -430,6 +437,8 @@
                          servers))))
   (defun my/eglot-typescript-server ()
     (let* ((root (my/eglot-project-root))
+           ;; Strip TRAMP prefix if present
+           (root (if (file-remote-p root) (file-local-name root) root))
            (tsserver (and root (expand-file-name "node_modules/typescript/lib/tsserver.js" root)))
            (cmd (list (my/eglot-node-bin "typescript-language-server") "--stdio")))
       (if (and tsserver (file-exists-p tsserver))
@@ -477,11 +486,6 @@
        ((equal ext "vue")
         (my/eglot-rass
          (my/eglot-vue-server)
-         (my/eglot-typescript-server)
-         (my/eglot-eslint-server)))
-       ((equal ext "astro")
-        (my/eglot-rass
-         (my/eglot-astro-server)
          (my/eglot-typescript-server)
          (my/eglot-eslint-server)))
        (t (my/eglot-typescript-rass)))))
