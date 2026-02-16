@@ -186,6 +186,9 @@
   :custom
   (vterm-max-scrollback 10000))
 
+(use-package agent-shell
+  :ensure t)
+
 (use-package eat
   :straight
   (eat :type git
