@@ -187,6 +187,8 @@
   (vterm-max-scrollback 10000))
 
 (use-package agent-shell
+  :custom
+  (agent-shell-session-strategy 'prompt)
   :ensure t)
 
 (use-package eat
@@ -508,6 +510,8 @@
    (markdown-ts-mode . eglot-ensure)
    (json-ts-mode . eglot-ensure)
    (css-ts-mode . eglot-ensure))
+  :custom
+  (eglot-code-action-indicator "A")
   :config
   (dolist (entry
            '((python-ts-mode . my/eglot-python-server)
