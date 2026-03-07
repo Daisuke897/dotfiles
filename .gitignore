@@ -3,3 +3,4 @@ images
 .direnv/
 .venv/
 .DS_Store
+.agent-shell/
