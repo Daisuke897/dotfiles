@@ -86,6 +86,10 @@
             pkgs.nodejs
             cfnLint
             rassumfrassum
+            pkgs.docker
+            pkgs.docker-compose
+          ] ++ pkgs.lib.optionals pkgs.stdenv.isDarwin [
+            pkgs.colima
           ];
         in
         {
