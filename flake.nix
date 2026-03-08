@@ -72,6 +72,7 @@
             pkgs.vue-language-server
             pkgs.vscode-langservers-extracted
             pkgs.yaml-language-server
+            pkgs.bash-language-server
             pkgs.texlab
             pkgs.rust-analyzer
             pkgs.fortls

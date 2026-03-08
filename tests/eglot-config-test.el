@@ -23,6 +23,8 @@
   (let ((text (my/test--init-contents)))
     (should (string-match-p "eglot-server-programs" text))
     (should (string-match-p "python-ts-mode \\. my/eglot-python-server" text))
+    (should (string-match-p "bash-ts-mode \\. my/eglot-bash-server" text))
+    (should (string-match-p "bash-language-server" text))
     (should (string-match-p "typescript-ts-mode" text))
     (should (string-match-p "rass" text))
   ))
