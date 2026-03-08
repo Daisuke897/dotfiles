@@ -90,6 +90,7 @@
             pkgs.docker-compose
             pkgs.devcontainer
           ] ++ pkgs.lib.optionals pkgs.stdenv.isDarwin [
+            pkgs.docker-credential-helpers
             pkgs.colima
           ];
         in
