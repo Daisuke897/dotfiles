@@ -416,8 +416,6 @@
                 :configurationPreference "filesystemFirst"
                 :format (:preview t)))
       (:eslint . (:format (:enable t)))))
-  (when (boundp 'project-vc-extra-root-markers)
-    (add-to-list 'project-vc-extra-root-markers "pyproject.toml"))
   (defun my/eglot-project-root ()
     (or (when-let ((project (project-current nil)))
           (project-root project))
