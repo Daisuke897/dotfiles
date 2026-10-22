@@ -1,17 +1,16 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    nixpkgs-old.url = "github:NixOS/nixpkgs/nixos-24.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
     home-manager = {
-      url = "github:nix-community/home-manager/release-26.05";
+      url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = inputs@{ nixpkgs-old, flake-parts, ... }:
+  outputs = inputs@{ flake-parts, ... }:
     let
-      mkEnv = { pkgs, pkgs-old }:
+      mkEnv = { pkgs }:
         let
           mkGrammar = lang: grammar: pkgs.runCommand "tree-sitter-${lang}" {} ''
             mkdir -p $out/lib
@@ -20,7 +19,7 @@
           mergedGrammars = pkgs.symlinkJoin {
             name = "merged-tree-sitter-grammars";
             paths = [
-              (mkGrammar "python" pkgs-old.tree-sitter-grammars.tree-sitter-python)
+              (mkGrammar "python" pkgs.tree-sitter-grammars.tree-sitter-python)
               (mkGrammar "yaml" pkgs.tree-sitter-grammars.tree-sitter-yaml)
               (mkGrammar "bash" pkgs.tree-sitter-grammars.tree-sitter-bash)
               (mkGrammar "tsx" pkgs.tree-sitter-grammars.tree-sitter-tsx)
@@ -34,39 +33,7 @@
               (mkGrammar "toml" pkgs.tree-sitter-grammars.tree-sitter-toml)
             ];
           };
-          cfnLint = pkgs.python3Packages.cfn-lint.overrideAttrs (oldAttrs: {
-            version = "1.44.0";
-            src = pkgs.fetchFromGitHub {
-              owner = "aws-cloudformation";
-              repo = "cfn-lint";
-              rev = "4bd61db11b8aa70ad467ec77fd253369471943d9";
-              sha256 = "0c06168fisvzibp1wi25dpac4sa8s96527qwaqz6f7s7lv2qr3g5";
-            };
-            patchPhase = ''
-              substituteInPlace pyproject.toml \
-                --replace 'setuptools >= 80.10.2' 'setuptools >= 80.9.0'
-            '';
-            meta = oldAttrs.meta // {
-              changelog = "https://github.com/aws-cloudformation/cfn-lint/blob/v1.44.0/CHANGELOG.md";
-            };
-          });
-          rassumfrassum = pkgs.python3Packages.buildPythonPackage rec {
-            pname = "rassumfrassum";
-            version = "0.3.3";
-            src = pkgs.fetchurl {
-              url = "https://github.com/joaotavora/rassumfrassum/archive/refs/tags/v0.3.3.tar.gz";
-              sha256 = "0d0r5xcr34fbqc5366pvvr6p2zbhvczrwi8v1i1igzcf2zmiky24";
-            };
-            pyproject = true;
-            build-system = with pkgs.python3Packages; [ setuptools ];
-            doCheck = false;
-            meta = with pkgs.lib; {
-              description = "Lightweight LSP multiplexer that exposes a single rass entry point";
-              homepage = "https://github.com/joaotavora/rassumfrassum";
-              license = licenses.gpl3Plus;
-            };
-          };
-
+          cfnLint = pkgs.python3Packages.cfn-lint;
           homePackages = [
             pkgs.typescript-language-server
             pkgs.vue-language-server
@@ -79,17 +46,18 @@
             pkgs.ruff
             pkgs.ty
             pkgs.uv
-            pkgs-old.marksman
+            pkgs.marksman
             pkgs.taplo
             pkgs.dockerfile-language-server
             mergedGrammars
             pkgs.forgejo-cli
             pkgs.nodejs
             cfnLint
-            rassumfrassum
+            pkgs.rassumfrassum
+            pkgs.gdal
             pkgs.docker
             pkgs.docker-compose
-          ] ++ pkgs.lib.optionals pkgs.stdenv.isDarwin [
+          ] ++ pkgs.lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
             pkgs.docker-credential-helpers
             pkgs.colima
             pkgs.shfmt
@@ -103,8 +71,7 @@
       mkHome = system: homeDirectory:
         let
           pkgs = import inputs.nixpkgs { inherit system; };
-          pkgs-old = import nixpkgs-old { inherit system; };
-          env = mkEnv { inherit pkgs pkgs-old; };
+          env = mkEnv { inherit pkgs; };
         in
         inputs.home-manager.lib.homeManagerConfiguration {
           pkgs = pkgs;
