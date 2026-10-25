@@ -55,6 +55,8 @@
             pkgs.docker-credential-helpers
             pkgs.colima
             pkgs.shfmt
+          ] ++ pkgs.lib.optionals pkgs.stdenv.hostPlatform.isLinux [
+            pkgs.mozc
           ];
         in
         {
