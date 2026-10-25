@@ -16,17 +16,12 @@
 
 (set-language-environment "UTF-8")
 
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
-(package-initialize)
-
 (eval-when-compile
   (require 'use-package))
 
 ;; MacOS
 (when (eq system-type 'darwin)
-  (set-face-attribute 'default nil :height 160)
-  (set-frame-parameter nil 'alpha 85))
+  (set-face-attribute 'default nil :height 160))
 
 ;; Clipboard integration (macOS / WSL)
 (defun my/send-to-clipboard (text)
@@ -55,39 +50,16 @@
 ;; Tab
 (tab-bar-mode)                          ; per project, workspace
 
-;; straight.el
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name
-        "straight/repos/straight.el/bootstrap.el"
-        (or (bound-and-true-p straight-base-dir)
-            user-emacs-directory)))
-      (bootstrap-version 7))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
-
 ;; Treesit
 (use-package treesit
-  :ensure nil
   :custom
-  (treesit-font-lock-level 4)
-  :config
-  (when-let ((nix-grammar-path (getenv "TREE_SITTER_GRAMMAR_PATH")))
-    (setq treesit-extra-load-path (list nix-grammar-path))))
+  (treesit-font-lock-level 4))
 
 ;; Mode
 (use-package rust-ts-mode
-  :ensure t
   :mode "\\.rs\\'")
 
 (use-package python-ts-mode
-  :ensure nil
   :mode "\\.py\\'"
   :functions (eglot-managed-p eglot-format-buffer eglot-format eglot-code-actions)
   :preface
@@ -108,67 +80,55 @@
   (python-ts-mode . my/python-mode-setup))
 
 (use-package yaml-ts-mode
-  :ensure t
   :mode
   ("\\.yaml\\'" . yaml-ts-mode)
   ("\\.yml\\'" . yaml-ts-mode))
 
 (use-package bash-ts-mode
-  :ensure nil
   :mode
   ("\\.sh\\'" . bash-ts-mode)
   :init
   (add-to-list 'major-mode-remap-alist '(sh-mode . bash-ts-mode)))
 
 (use-package typescript-ts-mode
-  :ensure t
   :mode
   ("\\.ts\\'" . typescript-ts-mode)
   ("\\.tsx\\'" . tsx-ts-mode))
 
 (use-package markdown-ts-mode
-  :ensure t
   :mode
   ("\\.md\\'" . markdown-ts-mode))
 
 (use-package json-ts-mode
-  :ensure nil
   :mode
   ("\\.json\\'" . json-ts-mode))
 
 (use-package css-ts-mode
-  :ensure nil
   :mode
   ("\\.css\\'" . css-ts-mode))
 
 (use-package go-ts-mode
-  :ensure nil
   :mode
   ("\\.go\\'" . go-ts-mode))
 
 (use-package go-mod-ts-mode
-  :ensure nil
   :mode
   ("go\\.mod\\'" . go-mod-ts-mode))
 
 (use-package toml-ts-mode
-  :ensure nil
   :mode
   ("\\.toml\\'" . toml-ts-mode))
 
 (use-package dockerfile-mode
-  :ensure t
   :mode
   ("Dockerfile\'" . dockerfile-mode)
   ("\\.dockerfile\\'" . dockerfile-mode))
 
 (use-package nix-ts-mode
-  :ensure t
   :mode
   ("\\.nix\\'" . nix-ts-mode))
 
 (use-package web-mode
-  :ensure t
   :mode
   ("\\.vue\\'" . web-mode)
   ("\\.astro\\'" . web-mode)
@@ -182,37 +142,21 @@
 
 ;; Tool
 (use-package vterm
-  :ensure t
   :custom
   (vterm-max-scrollback 10000))
 
 (use-package agent-shell
   :custom
   (agent-shell-session-strategy 'prompt)
-  :ensure t)
-
-(use-package eat
-  :straight
-  (eat :type git
-       :host codeberg
-       :repo "akib/emacs-eat"
-       :files ("*.el" ("term" "term/*.el") "*.texi"
-               "*.ti" ("terminfo/e" "terminfo/e/*")
-               ("terminfo/65" "terminfo/65/*")
-               ("integration" "integration/*")
-               (:exclude ".dir-locals.el" "*-tests.el")))
-  :config
-  (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode))
+  )
 
 (use-package consult
-  :ensure t
   :bind
   (("C-x b" . consult-buffer)
    ("C-s"   . consult-line))
   :commands (consult-line consult-buffer))
 
 (use-package orderless
-  :ensure t
   :custom
   (completion-styles '(orderless basic))
   (completion-category-overrides
@@ -224,15 +168,14 @@
           orderless-regexp)))
 
 (use-package vertico
-  :ensure t
   :after (orderless)
   :init
   (vertico-mode)
   :custom
-  (vertico-cycle t))
+  (vertico-cycle t)
+  (vertico-sort-function #'vertico-sort-directories-first))
 
 (use-package marginalia
-  :ensure t
   :after (vertico)
   :init
   (marginalia-mode)
@@ -240,26 +183,22 @@
   (setq marginalia-align 'right))
 
 (use-package which-key
-  :ensure t
   :init
   (which-key-mode)
   :custom
   (which-key-idle-delay 1.0))
 
 (use-package magit
-  :ensure t
   :commands (magit-status magit-blame))
 
 (use-package flymake
-  :ensure nil)
+  )
 
 (use-package yasnippet
-  :ensure t
   :config
   (yas-global-mode 1))
 
 (use-package cfn-mode
-  :ensure t
   :preface
   (defvar-local my/cfn-lint--proc nil)
   (defun my/cfn-lint-flymake (report-fn &rest _args)
@@ -317,7 +256,6 @@
   (cfn-mode . my-cfn-mode-setup))
 
 (use-package dired-subtree
-  :ensure t
   :bind (:map dired-mode-map
               ("i" . dired-subtree-insert)
               (";" . dired-subtree-remove)
@@ -325,7 +263,6 @@
 
 (use-package dired-sidebar
   :bind (("C-x C-n" . dired-sidebar-toggle-sidebar))
-  :ensure t
   :commands (dired-sidebar-toggle-sidebar)
   :hook
   (dired-sidebar-mode . auto-revert-mode)
@@ -334,7 +271,6 @@
   (dired-sidebar-theme 'nerd-icons))
 
 (use-package corfu
-  :ensure t
   :init
   (global-corfu-mode)
   :custom
@@ -344,12 +280,10 @@
   (corfu-quit-no-match 'separator))
 
 (use-package corfu-terminal
-  :ensure t
   :if (not (display-graphic-p))
   :init (corfu-terminal-mode))
 
 (use-package cape
-  :ensure t
   :bind ("C-c p" . cape-prefix-map)
   :init
   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
@@ -357,7 +291,6 @@
   (add-to-list 'completion-at-point-functions #'cape-keyword))
 
 (use-package embark
-  :ensure t
   :commands (embark-act embark-dwim embark-bindings)
   :bind
   (("C-c e" . embark-act)
@@ -367,18 +300,15 @@
   (setq prefix-help-command #'embark-prefix-help-command))
 
 (use-package embark-consult
-  :ensure t
   :after (embark consult)
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
 (use-package gcmh
-  :ensure t
   :init (gcmh-mode 1))
 
 ;; Lsp
 (use-package eglot
-  :ensure nil
   :demand t
   :preface
   (defconst my/eglot-yaml-custom-tags
@@ -532,7 +462,6 @@
 
 ;; Org
 (use-package org
-  :ensure nil
   :custom
   (org-highlight-latex-and-related '(latex script entities))
   :config
@@ -543,20 +472,18 @@
      (emacs-lisp . t))))
 
 (use-package org-modern
-  :ensure t
   :hook
   (org-mode . org-modern-mode)
   (org-agenda-finalize . org-modern-agenda))
 
 ;; Formatter
 (use-package sqlformat
-  :ensure t
   :custom
   (sqlformat-command 'sql-formatter))
 
 ;; Mozc
 (use-package mozc
-  :ensure t
+  :ensure nil
   :if (eq system-type 'gnu/linux)
   :config
   ;; "sudo apt install emacs-mozc-bin"
@@ -568,7 +495,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
- '(custom-enabled-themes '(modus-vivendi))
+ '(custom-enabled-themes '(modus-operandi-tinted))
  '(gc-cons-threshold 100000000)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)

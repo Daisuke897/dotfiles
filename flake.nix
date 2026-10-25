@@ -1,39 +1,34 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/26.05";
     flake-parts.url = "github:hercules-ci/flake-parts";
     home-manager = {
-      url = "github:nix-community/home-manager/master";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    emacs-overlay.url = "github:nix-community/emacs-overlay";
+    emacs-overlay.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = inputs@{ flake-parts, ... }:
     let
       mkEnv = { pkgs }:
         let
-          mkGrammar = lang: grammar: pkgs.runCommand "tree-sitter-${lang}" {} ''
-            mkdir -p $out/lib
-            ln -s ${grammar}/parser $out/lib/libtree-sitter-${lang}.dylib
-          '';
-          mergedGrammars = pkgs.symlinkJoin {
-            name = "merged-tree-sitter-grammars";
-            paths = [
-              (mkGrammar "python" pkgs.tree-sitter-grammars.tree-sitter-python)
-              (mkGrammar "yaml" pkgs.tree-sitter-grammars.tree-sitter-yaml)
-              (mkGrammar "bash" pkgs.tree-sitter-grammars.tree-sitter-bash)
-              (mkGrammar "tsx" pkgs.tree-sitter-grammars.tree-sitter-tsx)
-              (mkGrammar "typescript" pkgs.tree-sitter-grammars.tree-sitter-typescript)
-              (mkGrammar "markdown-inline" pkgs.tree-sitter-grammars.tree-sitter-markdown-inline)
-              (mkGrammar "markdown" pkgs.tree-sitter-grammars.tree-sitter-markdown)
-              (mkGrammar "json" pkgs.tree-sitter-grammars.tree-sitter-json)
-              (mkGrammar "css" pkgs.tree-sitter-grammars.tree-sitter-css)
-              (mkGrammar "nix" pkgs.tree-sitter-grammars.tree-sitter-nix)
-              (mkGrammar "dockerfile" pkgs.tree-sitter-grammars.tree-sitter-dockerfile)
-              (mkGrammar "toml" pkgs.tree-sitter-grammars.tree-sitter-toml)
+          myEmacs = pkgs.emacsWithPackagesFromUsePackage {
+            package = pkgs.emacs;
+
+            config = ./init.el;
+
+            alwaysEnsure = true;
+
+            extraEmacsPackages = epkgs: [
+              epkgs.use-package
+              epkgs.treesit-grammars.with-all-grammars
+            ] ++ pkgs.lib.optionals pkgs.stdenv.hostPlatform.isLinux [
+              epkgs.mozc
             ];
           };
-          cfnLint = pkgs.python3Packages.cfn-lint;
+
           homePackages = [
             pkgs.typescript-language-server
             pkgs.vue-language-server
@@ -49,10 +44,9 @@
             pkgs.marksman
             pkgs.taplo
             pkgs.dockerfile-language-server
-            mergedGrammars
             pkgs.forgejo-cli
             pkgs.nodejs
-            cfnLint
+            pkgs.python3Packages.cfn-lint
             pkgs.rassumfrassum
             pkgs.gdal
             pkgs.docker
@@ -65,12 +59,15 @@
         in
         {
           pkgs = pkgs;
-          mergedGrammars = mergedGrammars;
+          myEmacs = myEmacs;
           homePackages = homePackages;
         };
       mkHome = system: homeDirectory:
         let
-          pkgs = import inputs.nixpkgs { inherit system; };
+          pkgs = import inputs.nixpkgs {
+            inherit system;
+            overlays = [ inputs.emacs-overlay.overlays.default ];
+          };
           env = mkEnv { inherit pkgs; };
         in
         inputs.home-manager.lib.homeManagerConfiguration {
@@ -79,10 +76,17 @@
             ({ pkgs, ... }: {
               home.username = "daisuke";
               home.homeDirectory = homeDirectory;
-              home.stateVersion = "25.11";
+              home.stateVersion = "26.05";
               home.packages = env.homePackages;
+              programs.emacs = {
+                enable = true;
+                package = env.myEmacs;
+              };
+              services.emacs = {
+                enable = true;
+                defaultEditor = true;
+              };
               home.sessionVariables = {
-                TREE_SITTER_GRAMMAR_PATH = "${env.mergedGrammars}/lib";
                 VUE_LSP_PATH = "${env.pkgs.vue-language-server}/lib";
               };
             })
