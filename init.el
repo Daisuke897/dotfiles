@@ -496,13 +496,17 @@
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
  '(custom-enabled-themes '(modus-operandi-tinted))
+ '(frame-inhibit-implied-resize t)
  '(gc-cons-threshold 100000000)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
  '(make-backup-files nil)
+ '(menu-bar-mode nil)
  '(org-agenda-files nil)
  '(require-final-newline t)
- '(show-trailing-whitespace t))
+ '(scroll-bar-mode nil)
+ '(show-trailing-whitespace t)
+ '(tool-bar-mode nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
